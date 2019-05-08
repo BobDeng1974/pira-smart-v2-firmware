@@ -1,0 +1,17 @@
+nRF51 RTC example
+There are no mbed libraries with time and date tracking, but it can be possible to implement that.
+https://os.mbed.com/users/fxschumacher/code/nRF51_rtc_example/file/c1f06d0a5e11/main.cpp/
+https://os.mbed.com/users/fxschumacher/code/nrf51_rtc/
+
+MBED libraries are availabe for these RTCs:
+DS1307 https://os.mbed.com/users/harrypowers/code/DS1307/docs/c3e4da8feb10/classDS1307.html
+       https://os.mbed.com/users/nkhorman/code/Adafruit_RTCLib/
+DS3231 https://os.mbed.com/users/cromda/code/DS3231/
+https://os.mbed.com/components/AM1805-Real-Time-Clock-with-Power-Manage/
+https://os.mbed.com/components/ISL1208-Real-Time-Clock/
+
+Nordic SDK example documentation
+http://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.sdk5.v13.0.0%2Frtc_example.html&cp=4_0_0_4_4_27
+
+https://docs.mbed.com/docs/mbed-os-api-reference/en/5.1/APIs/tasks/Time/
+

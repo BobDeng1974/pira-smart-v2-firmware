@@ -1,0 +1,12 @@
+Pira-smart-firmware
+Mbed-CLI install instructions on Windows
+
+1. Install Python 2.7 and add it to windows system path
+2. Install Git and Mercurial
+3. Install GNU ARM embedded toolchain version 6 (or 7)
+4. > pip install mbed-cli
+5. > mbed import https://github.com/IRNAS/pira-smart-firmware.git
+6. > cd pira-smart-firmware
+7. > mbed config -G GCC_ARM_PATH "<gcc_compiler_bin_folder_path>"
+8. > mbed deploy
+9. > mbed compile -m RBLAB_BLENANO -t GCC_ARM
