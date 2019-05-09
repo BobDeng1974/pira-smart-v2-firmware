@@ -36,7 +36,7 @@
 #define OFF_PERIOD_INIT_VALUE_s 7200
 
 
-#define RX_BUFFER_SIZE      7        //Size in B
+#define RX_BUFFER_SIZE (7)        //Size in B
 
 #define HW_WATCHDOG_TIMER_THRESHOLD	10	// value in seconds 
 
@@ -80,9 +80,11 @@ TimerMillis periodicTimer;
 void periodicCallback(void)
 {
     // HW WatchDog reset    
-    //HWatchDogTimer::kick();
+    STM32L0.wdtReset();
+
     // TODO We used to blink led on old board, now we print once per second, we probably wont need this later.
     Serial1.println("blink");
+
     // Set flag to update status every second    
     sendTime = 1; 
 
@@ -150,8 +152,6 @@ void onDataWrittenCallback(const GattWriteCallbackParams *params) {
 }
 */ 
 
-
-// TODO uart parsing shouldnt be hard here with help of arduino
 void uartCommandParse(uint8_t *rxBuffer, uint8_t len)
 {
     uint8_t firstChar = rxBuffer[0];
@@ -175,65 +175,66 @@ void uartCommandParse(uint8_t *rxBuffer, uint8_t len)
         switch(firstChar)
         {
             case 't':
-                //pc.printf("t: received\n");
+                //Serial1.println("t: received");
                 time((time_t)data);
                 break;
             case 'p':
-                //pc.printf("p: received\n");
+                //Serial1.println("p: received");
                 onPeriodValue = data;
                 break;
             case 's':
-                //pc.printf("s: received\n");
+                //Serial1.println("s: received");
                 offPeriodValue = data;
                 break;
             case 'c':
-                //pc.printf("c: received\n");
+                //Serial1.println("c: received");
                 Serial1.println("To be defined how to react on c: command");
                 break;
             case 'r':
-                //pc.printf("r: received\n");
+                //Serial1.println("r: received");
                 rebootThresholdValue = data;
                 break;
             case 'w':
-                //pc.printf("w: received\n");
+                //Serial1.println("w: received");
                 wakeupThresholdValue = data;
                 break;
             default:
                 break;
         }
     }
+    else 
+        Serial1.print("Incorrect format, this shouldn't happen!");
 }
 
 //TODO change
 void uartCommandSend(char command, uint32_t data)
 {
-//#ifndef DEBUG_BLE
-//    pc.putc((int)command);
-//    pc.putc(':');
-//    pc.putc((int)((data & 0xFF000000)>>24));
-//    pc.putc((int)((data & 0x00FF0000)>>16));
-//    pc.putc((int)((data & 0x0000FF00)>>8));
-//    pc.putc((int)( data & 0x000000FF));
-//    pc.putc('\n');
-//#endif
+#ifndef DEBUG_BLE
+    Serial1.print((int)command);
+    Serial1.print(':');
+    Serial1.print((int)((data & 0xFF000000)>>24));
+    Serial1.print((int)((data & 0x00FF0000)>>16));
+    Serial1.print((int)((data & 0x0000FF00)>>8));
+    Serial1.print((int)( data & 0x000000FF));
+    Serial1.print('\n');
+#endif
 }
 
 #ifdef SEND_TIME_AS_STRING
 void uartCommandSendArray(char command, char *array, uint8_t len)
 {
-//    pc.putc((int)command);
-//    pc.putc(':');
-//    for (int i = 0; i < len; i++)
-//    {
-//        pc.putc((int)array[i]);
-//    }
+    Serial1.print((int)command);
+    Serial1.print(':');
+    for (int i = 0; i < len; i++)
+    {
+        Serial1.print((int)array[i]);
+    }
 }
 #endif
 
-// TODO solve this diffrently with arduino
 void uartCommandReceive(void)
 {
-    char rxBuffer[8] = "";     //Empty c stirng   
+    uint8_t rxBuffer[RX_BUFFER_SIZE] = "";     
     uint8_t rxIndex = 0;
     if (Serial1.available() != 0)
     {
@@ -242,113 +243,72 @@ void uartCommandReceive(void)
                    // A short delay prevents that. 
         while (Serial1.available() > 0)
         {
-             rxBuffer[rxIndex] = Serial1.read();
+            rxBuffer[rxIndex] = Serial1.read();
 
-            rxIndex++;
-            if (rxBuffer[rxIndex] == '\n')
+            if (rxIndex == 0)
             {
-                //All data withing the packet has been received, parse the packet and execute commands
-                if (rxIndex == 7)
+                if (rxBuffer[rxIndex] != 't' &&
+                    rxBuffer[rxIndex] != 'p' &&
+                    rxBuffer[rxIndex] != 's' &&
+                    rxBuffer[rxIndex] != 'c' &&
+                    rxBuffer[rxIndex] != 'r' &&
+                    rxBuffer[rxIndex] != 'w')
                 {
-                    //pc.printf("All characters has been received\n");
-                    Serial1.print("I received: ");
-                    Serial1.println(rxBuffer);
-                    Serial1.println("All characters has been received");
-                    //uartCommandParse(rxBuffer, 8);
+                    // Anything received that is not by protocol is discarded!
                     rxIndex = 0;
-                    //break;
                 }
                 else
+                    // By protocol, continue receiving.
+                    rxIndex++;
+            }
+            else if (rxIndex == 1)
+            {
+                if (rxBuffer[rxIndex] != ':')
+                    // Anything received that is not by protocol is discarded!
+                    rxIndex = 0;
+                else
+                    // By protocol, continue receiving.
+                    rxIndex++;
+            }
+            else
+            {
+                if (rxBuffer[rxIndex] == '\n')
                 {
+                    //All data withing the packet has been received, parse the packet and execute commands
+                    if (rxIndex == (RX_BUFFER_SIZE - 1))
+                    {
+                        //Serial1.print("I received: ");
+                        //Serial1.print(rxBuffer);
+                        uartCommandParse(rxBuffer, RX_BUFFER_SIZE);
+                        rxIndex = 0;
+                    }
+                    else
+                    {
+                        // Incorrect length, clean up buffer
+                        for (int i = 0; i < RX_BUFFER_SIZE; i++)
+                        {
+                            rxBuffer[i] = 0;
+                        }
+                        rxIndex = 0;
+                    } 
+                }
+                else if (rxIndex == (RX_BUFFER_SIZE - 1))
+                {
+                    // We reached max lenght, but no newline, empty buffer  
                     for (int i = 0; i < RX_BUFFER_SIZE; i++)
                     {
                         rxBuffer[i] = 0;
                     }
                     rxIndex = 0;
-                } 
-            }
-
-        }
-
-    // TODO old way of reading incoming comand, maek sure is extra functionality is needed at all.
-        /*
-    while (pc.readable())
-    {
-        // Receive characters 
-        rxBuffer[rxIndex] = pc.getc();
-
-        if (rxIndex == 0)
-        {
-            if (rxBuffer[rxIndex] != 't' &&
-                rxBuffer[rxIndex] != 'p' &&
-                rxBuffer[rxIndex] != 's' &&
-                rxBuffer[rxIndex] != 'c' &&
-                rxBuffer[rxIndex] != 'r' &&
-                rxBuffer[rxIndex] != 'w')
-            {
-                //rxIndex reset is added for clarity
-                rxIndex = 0;
-                //break should not happen
-                //break;
-            }
-            else
-            {
-                rxIndex++;
-            }
-                
-        }
-        else if (rxIndex == 1)
-        {
-            if (rxBuffer[rxIndex] != ':')
-            {
-                rxIndex = 0;
-                //break;
-            }
-            else
-            {
-                rxIndex++;
-            }
-        }
-        else
-        {
-            if (rxBuffer[rxIndex] == '\n')
-            {
-                //All data withing the packet has been received, parse the packet and execute commands
-                if (rxIndex == 6)
-                {
-                    //pc.printf("All characters has been received\n");
-                    uartCommandParse(rxBuffer, RX_BUFFER_SIZE);
-                    rxIndex = 0;
-                    //break;
                 }
                 else
                 {
-                    for (int i = 0; i < RX_BUFFER_SIZE; i++)
-                    {
-                        rxBuffer[i] = 0;
-                    }
-                    rxIndex = 0;
-                } 
-            }
-            else if (rxIndex == 6)
-            {
-                for (int i = 0; i < RX_BUFFER_SIZE; i++)
-                {
-                    rxBuffer[i] = 0;
-                }
-                rxIndex = 0;
-            }
-            else
-            {
-                rxIndex++;
-                if (rxIndex > 6)
-                {
-                    rxIndex = 0;
+                    rxIndex++;
+                    if (rxIndex > (RX_BUFFER_SIZE - 1))
+                        rxIndex = 0;
                 }
             }
         }
-    }
-    */
     }
 }
 
@@ -499,9 +459,9 @@ void setup(void)
     // Initialize variables
     sendTime = 0;
     
-    //TODO this will be changed 
-    // init HW Watchdog timer - attached to blink periodicCallback
-    //HWatchDogTimer::init(HW_WATCHDOG_TIMER_THRESHOLD);
+    // TODO Check with musti what should be the time of wdt
+    // Enable watchdog, reset it in periodCallback
+    STM32L0.wdtEnable(2000);
 
     // Start i2c communication
     Wire.begin();
@@ -509,6 +469,7 @@ void setup(void)
     // UART needs to be initialized first to use it for communication with RPi
     Serial1.begin(115200);
     while (!Serial1) {}
+    //Serial1.println("Murata started");
 
     // RTC init
     init_rtc();
@@ -517,11 +478,6 @@ void setup(void)
     periodicTimer.start(periodicCallback, 0, 1000); //Starts immediately, repeats every 1000 ms
 }
 
-void loop()
-{
-    uartCommandReceive();
-}
-/*
 void loop()
 {    
     while (true) 
@@ -535,28 +491,30 @@ void loop()
 
             // Get the current time from RTC 
             time_t seconds = time();
-#ifdef DEBUG
-            Serial1.println("Time as a basic string = ");
-            Serial1.print(ctime(&seconds));
-            //pc.printf("Time as a basic string = %s", ctime(&seconds));
-#endif
+//#ifdef DEBUG
+            Serial1.print("Time as a basic string = ");
+            Serial1.println(ctime(&seconds));
+//#endif
+            //TODO
             // Write current time to containter variable which can be read over BLE
             temp = ctime(&seconds);
             memcpy(getTimeValue, temp, strlen((const char *)temp));
             //TODO this will be changed
             //piraServicePtr->updateTime(getTimeValue);
            
-#ifdef SEND_TIME_AS_STRING
+//#ifdef SEND_TIME_AS_STRING
             // Send time to RaspberryPi in a string format
-            Serial1.println("Time as a basic string = ");
-            Serial1.print(getTimeValue);
-            //pc.printf("t:%s", getTimeValue);
-#else
+            Serial1.print("t:");
+            Serial1.println(getTimeValue);
+//#else
             // Send time in seconds since Jan 1 1970 00:00:00
-            // pc.printf("t:%d\n", seconds);
+            Serial1.println(seconds);
             uartCommandSend('t', seconds);
-#endif
-
+//#endif
+}
+}
+}
+/*
             // Update status values
             // Seconds left before next power supply turn off
             piraStatus = onPeriodValue - raspberryPiControl.timeoutOnGet();
@@ -610,4 +568,5 @@ void loop()
                                             turnOnRpiState);
         }
     }
-}   */
+}
+*/
