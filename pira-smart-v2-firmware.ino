@@ -27,6 +27,8 @@
 #include "app_config.h" 
 #include "RaspberryPiControl.h"
 #include "BatteryVoltage.h"
+
+
 //#include "HWatchDogTimer.h"
 
 // Initial Time is Mon, 1 Jan 2018 00:00:00
@@ -37,21 +39,12 @@
 
 
 #define RX_BUFFER_SIZE (7)        //Size in B
-
 #define HW_WATCHDOG_TIMER_THRESHOLD	10	// value in seconds 
 
 //#define DEBUG
 
-
-// TODO UART and I2C objects are not needed, rtc object is also different, picontrol and voltge objects are probably okay
-// Create UART object
-//Serial pc(UART_TX, UART_RX);
-//BufferedSerial pc(UART_TX, UART_RX);
-// Create I2C object
-//I2C i2c(I2C_SDA, I2C_SCL);
 // Create ISL1208 object
 ISL1208_RTC rtc; 
-//ISL1208 rtc(&i2c);    
 // RaspberryPiControl object
 RaspberryPiControl raspberryPiControl;
 // Battery Voltage object
@@ -71,7 +64,7 @@ uint32_t wakeupThresholdValue;
 char getTimeValue[26] = "Tue Apr 10 12:00:00 2018\n";
 char *temp;
 uint8_t sendTime; 
-uint8_t batteryLevelContainer;
+uint16_t batteryLevelContainer;
 bool turnOnRpiState;
 
 TimerMillis periodicTimer;
@@ -156,18 +149,11 @@ void uartCommandParse(uint8_t *rxBuffer, uint8_t len)
 {
     uint8_t firstChar = rxBuffer[0];
     uint8_t secondChar = rxBuffer[1];
-    // uint8_t dataLen = (uint8_t)(len - 2);
     // Since data type of data is uint32_t, it is by default dataLen = 4
     // but it is implemented like this in order to later have possibility to update it to different data type 
     // or to use less than 4B
     uint32_t data = 0;
 
-    /*
-    for (int i = 0, j = 2; ((i >= (int)dataLen) || (j >= 6)); i++, j++)
-    {
-        data |= (uint32_t)(rxBuffer[j] << ((3-i)*8));
-    }
-    */
     data = (rxBuffer[2] << 24) | (rxBuffer[3] << 16) | (rxBuffer[4] << 8) | (rxBuffer[5]);
 
     if (secondChar == ':')
@@ -206,28 +192,27 @@ void uartCommandParse(uint8_t *rxBuffer, uint8_t len)
         Serial1.print("Incorrect format, this shouldn't happen!");
 }
 
-//TODO change
 void uartCommandSend(char command, uint32_t data)
 {
 #ifndef DEBUG_BLE
-    Serial1.print((int)command);
-    Serial1.print(':');
-    Serial1.print((int)((data & 0xFF000000)>>24));
-    Serial1.print((int)((data & 0x00FF0000)>>16));
-    Serial1.print((int)((data & 0x0000FF00)>>8));
-    Serial1.print((int)( data & 0x000000FF));
-    Serial1.print('\n');
+    Serial1.write((int)command);
+    Serial1.write(':');
+    Serial1.write((int)((data & 0xFF000000)>>24));
+    Serial1.write((int)((data & 0x00FF0000)>>16));
+    Serial1.write((int)((data & 0x0000FF00)>>8));
+    Serial1.write((int)( data & 0x000000FF));
+    Serial1.write('\n');
 #endif
 }
 
 #ifdef SEND_TIME_AS_STRING
 void uartCommandSendArray(char command, char *array, uint8_t len)
 {
-    Serial1.print((int)command);
-    Serial1.print(':');
+    Serial1.write((int)command);
+    Serial1.write(':');
     for (int i = 0; i < len; i++)
     {
-        Serial1.print((int)array[i]);
+        Serial1.write((int)array[i]);
     }
 }
 #endif
@@ -312,8 +297,6 @@ void uartCommandReceive(void)
     }
 }
 
-
-// TODO This should be fine now, check functionality
 void init_rtc()
 {
     rtc.begin();
@@ -491,10 +474,10 @@ void loop()
 
             // Get the current time from RTC 
             time_t seconds = time();
-//#ifdef DEBUG
+#ifdef DEBUG
             Serial1.print("Time as a basic string = ");
             Serial1.println(ctime(&seconds));
-//#endif
+#endif
             //TODO
             // Write current time to containter variable which can be read over BLE
             temp = ctime(&seconds);
@@ -502,25 +485,30 @@ void loop()
             //TODO this will be changed
             //piraServicePtr->updateTime(getTimeValue);
            
-//#ifdef SEND_TIME_AS_STRING
+#ifdef SEND_TIME_AS_STRING
             // Send time to RaspberryPi in a string format
             Serial1.print("t:");
             Serial1.println(getTimeValue);
-//#else
+#else
             // Send time in seconds since Jan 1 1970 00:00:00
-            Serial1.println(seconds);
             uartCommandSend('t', seconds);
-//#endif
-}
-}
-}
-/*
+#endif
             // Update status values
             // Seconds left before next power supply turn off
             piraStatus = onPeriodValue - raspberryPiControl.timeoutOnGet();
             //TODO create a new service later
             //piraServicePtr->updateStatus(&piraStatus);
             // Send status to RPi -> time until next sleep and then battery level
+
+            batteryLevelContainer = batteryVoltage.batteryLevelGet();
+            Serial1.print("Battery level in V = ");
+            Serial1.println((batteryVoltage.batteryVoltageGet(batteryLevelContainer)));
+}
+}
+}
+/*
+            Serial1.println("p:");
+            Serial1.println(piraStatus);
             // pc.printf("p:%d\n", piraStatus);
             uartCommandSend('o', piraStatus);
 
@@ -544,8 +532,8 @@ void loop()
             //piraServicePtr->updateOffPeriodSeconds(&offPeriodValue);
             //piraServicePtr->updateRebootPeriodSeconds(&rebootThresholdValue);
             //piraServicePtr->updateWakeupPeriodSeconds(&wakeupThresholdValue);
+
 #ifdef DEBUG
-           
             Serial1.print("Battery level in V = ");
             Serial1.println((int)(batteryVoltage.batteryVoltageGet(batteryLevelContainer)*100));
             Serial1.print("onPeriodValue =");
