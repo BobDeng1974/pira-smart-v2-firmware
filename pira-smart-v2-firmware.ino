@@ -29,19 +29,14 @@
 #include "BatteryVoltage.h"
 
 
-//#include "HWatchDogTimer.h"
-
 // Initial Time is Mon, 1 Jan 2018 00:00:00
 #define TIME_INIT_VALUE  1514764800UL
 
 #define ON_PERIOD_INIT_VALUE_s 7200
 #define OFF_PERIOD_INIT_VALUE_s 7200
 
-
-#define RX_BUFFER_SIZE (7)        //Size in B
-#define HW_WATCHDOG_TIMER_THRESHOLD	10	// value in seconds 
-
-//#define DEBUG
+#define RX_BUFFER_SIZE (7)        //Size in B, do not change, comunication protocol between Pira adn RPi depends on this
+#define WATCHDOG_RESET_VALUE_s (15000)
 
 // Create ISL1208 object
 ISL1208_RTC rtc; 
@@ -49,9 +44,6 @@ ISL1208_RTC rtc;
 RaspberryPiControl raspberryPiControl;
 // Battery Voltage object
 BatteryVoltage batteryVoltage;
-
-// TODO Used later for ble services
-//Service pointers declarations
 
 const static char     DEVICE_NAME[] = "PiraSmart";
 //static const uint16_t uuid16_list[] = {LEDService::LED_SERVICE_UUID, PiraService::PIRA_SERVICE_UUID};
@@ -67,16 +59,14 @@ uint8_t sendTime;
 uint16_t batteryLevelContainer;
 bool turnOnRpiState;
 
+// Timer needed for interrupt
 TimerMillis periodicTimer;
 
-// Tehnically this should be called periodicInterrupt but I will leave old name.  
+// Watchdog is reseted here, sendTime flag is set here
 void periodicCallback(void)
 {
     // HW WatchDog reset    
     STM32L0.wdtReset();
-
-    // TODO We used to blink led on old board, now we print once per second, we probably wont need this later.
-    Serial1.println("blink");
 
     // Set flag to update status every second    
     sendTime = 1; 
@@ -149,9 +139,6 @@ void uartCommandParse(uint8_t *rxBuffer, uint8_t len)
 {
     uint8_t firstChar = rxBuffer[0];
     uint8_t secondChar = rxBuffer[1];
-    // Since data type of data is uint32_t, it is by default dataLen = 4
-    // but it is implemented like this in order to later have possibility to update it to different data type 
-    // or to use less than 4B
     uint32_t data = 0;
 
     data = (rxBuffer[2] << 24) | (rxBuffer[3] << 16) | (rxBuffer[4] << 8) | (rxBuffer[5]);
@@ -174,7 +161,7 @@ void uartCommandParse(uint8_t *rxBuffer, uint8_t len)
                 break;
             case 'c':
                 //Serial1.println("c: received");
-                Serial1.println("To be defined how to react on c: command");
+                //Serial1.println("To be defined how to react on c: command");
                 break;
             case 'r':
                 //Serial1.println("r: received");
@@ -305,7 +292,7 @@ void init_rtc()
     if(rtc.isRtcActive()) //checks if the RTC is available on the I2C bus
     {
 #ifdef DEBUG
-        Serial1.println("Device detected!");
+        Serial1.println("RTC detected!");
 #endif
 
         //Check if we need to reset the time
@@ -319,7 +306,7 @@ void init_rtc()
         {
 #ifdef DEBUG
             //The time has been lost due to a power complete power failure
-            Serial1.println("Device has lost power! Resetting time...");
+            Serial1.println("RTC has lost power! Resetting time...");
 #endif 
             //Set RTC time to Mon, 1 Jan 2018 00:00:00
             time(TIME_INIT_VALUE);
@@ -328,7 +315,7 @@ void init_rtc()
     else
     {
 #ifdef DEBUG
-        Serial1.println("Device not detected!");
+        Serial1.println("RTC not detected!");
 #endif
     }
 }
@@ -398,6 +385,7 @@ void time(time_t t)
     //Disable RTC writing
     write8(ISL1208_ADDRESS, ISL1208_SR, sr);
 }
+
 char read8(char addr, char reg)
 {
     //Select the register
@@ -435,30 +423,56 @@ char bin2bcd(unsigned int val)
 
 void setup(void)
 {
+    //Serial1.println("Setup done"); //TODO Used for debugging delete later 
+    //Serial1.print("Reason for reset: "); //TODO Used for debugging delete later 
+    //Serial1.print(STM32L0.resetCause());
+    //#define STM32L0_SYSTEM_RESET_POWERON           0
+    //#define STM32L0_SYSTEM_RESET_EXTERNAL          1
+    //#define STM32L0_SYSTEM_RESET_SOFTWARE          2
+    //#define STM32L0_SYSTEM_RESET_WATCHDOG          3
+    //#define STM32L0_SYSTEM_RESET_FIREWALL          4
+    //#define STM32L0_SYSTEM_RESET_OTHER             5
+    //#define STM32L0_SYSTEM_RESET_STANDBY           6
+
     // Initially enable RaspberryPi power
     pinMode(POWER_ENABLE_5V, OUTPUT);
     digitalWrite(POWER_ENABLE_5V, HIGH); 
 
+    // Prepare status pin
+    pinMode(RASPBERRY_PI_STATUS, INPUT_PULLDOWN);
+
     // Initialize variables
     sendTime = 0;
     
-    // TODO Check with musti what should be the time of wdt
     // Enable watchdog, reset it in periodCallback
-    STM32L0.wdtEnable(2000);
+    STM32L0.wdtEnable(WATCHDOG_RESET_VALUE_s);
 
     // Start i2c communication
     Wire.begin();
 
     // UART needs to be initialized first to use it for communication with RPi
     Serial1.begin(115200);
-    while (!Serial1) {}
-    //Serial1.println("Murata started");
+    while(!Serial1){}
 
     // RTC init
     init_rtc();
 
     // periodicCallback must be attached after I2C is initialized
     periodicTimer.start(periodicCallback, 0, 1000); //Starts immediately, repeats every 1000 ms
+
+    //Set ON and OFF period values to 30min by default
+    setTimeValue = TIME_INIT_VALUE; 
+    piraStatus = 0;
+    onPeriodValue = ON_PERIOD_INIT_VALUE_s;
+    offPeriodValue = OFF_PERIOD_INIT_VALUE_s;
+    wakeupThresholdValue = OFF_PERIOD_INIT_VALUE_s;
+    rebootThresholdValue = raspberryPiControl.REBOOT_TIMEOUT_s;
+    batteryLevelContainer = 0;
+    turnOnRpiState = 0;
+    pinMode(PB7, OUTPUT);
+    digitalWrite(PB7, HIGH);
+    delay(500);
+    digitalWrite(PB7, LOW);
 }
 
 void loop()
@@ -499,24 +513,16 @@ void loop()
             //TODO create a new service later
             //piraServicePtr->updateStatus(&piraStatus);
             // Send status to RPi -> time until next sleep and then battery level
-
-            batteryLevelContainer = batteryVoltage.batteryLevelGet();
-            Serial1.print("Battery level in V = ");
-            Serial1.println((batteryVoltage.batteryVoltageGet(batteryLevelContainer)));
-}
-}
-}
-/*
-            Serial1.println("p:");
-            Serial1.println(piraStatus);
-            // pc.printf("p:%d\n", piraStatus);
+            //Serial1.println("p:");
+            //Serial1.println(piraStatus);
+            
             uartCommandSend('o', piraStatus);
 
             batteryLevelContainer = batteryVoltage.batteryLevelGet();
             //TODO solve next line
             //piraServicePtr->updateBatteryLevel(&batteryLevelContainer);
-            Serial1.print("b:");
-            Serial1.println((uint32_t)batteryLevelContainer);
+            //Serial1.print("b:");
+            //Serial1.println((uint32_t)batteryLevelContainer);
             uartCommandSend('b', (uint32_t)batteryLevelContainer);
 
             // Send rest of the values in order to verify changes
@@ -547,7 +553,9 @@ void loop()
             Serial1.print("turnOnRpiState = ");
             Serial1.println(turnOnRpiState);
             Serial1.print("Status Pin = ");
-            Serial1.println(digitalRead(RASPBERRY_PI_STATUS);
+            Serial1.println(digitalRead(RASPBERRY_PI_STATUS));
+            Serial1.print("PiraStatus = ");
+            Serial1.println(piraStatus);
 #endif
             raspberryPiControl.powerHandler(onPeriodValue,
                                             offPeriodValue,
@@ -557,4 +565,3 @@ void loop()
         }
     }
 }
-*/

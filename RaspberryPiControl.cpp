@@ -9,10 +9,7 @@ RaspberryPiControl::RaspberryPiControl(void)
     timeoutReboot = 0;
 }
 
-//TODO powerenable5v has been changed, debug print outs have been changed, chech what is wiht raspberry status pin  
-void RaspberryPiControl::powerHandler(//DigitalIn *raspberryPiStatus, 
-                                      //DigitalOut *powerEnable5V,
-                                      uint32_t onThreshold,
+void RaspberryPiControl::powerHandler(uint32_t onThreshold,
                                       uint32_t offThreshold,
                                       uint32_t wakeupThreshold,
                                       uint32_t rebootThreshold,
@@ -22,10 +19,13 @@ void RaspberryPiControl::powerHandler(//DigitalIn *raspberryPiStatus,
     {
         case IDLE_STATE:
             #ifdef DEBUG
-                Serial1.println("IDLE_STATE")
+                Serial1.println("IDLE_STATE");
+                Serial1.print("timeoutOff = ");
+                Serial1.println(timeoutOff);
             #endif
             //Check if we need to wakeup RaspberryPi
             timeoutOff++;
+
             // Typical usecase would be that wakeupThreshold < offThreshold
             if ((timeoutOff >= offThreshold)    || 
                 (timeoutOff >= wakeupThreshold) || 
@@ -44,22 +44,33 @@ void RaspberryPiControl::powerHandler(//DigitalIn *raspberryPiStatus,
         case WAIT_STATUS_ON_STATE:
             #ifdef DEBUG
                 Serial1.println("WAIT_STATUS_ON_STATE");
+                Serial1.print("timeoutON = ");
+                Serial1.println(timeoutOn);
             #endif
             //Wait when RaspberryPi pulls up STATUS pin
             //NOTE: Temporarely check reversed logic
             timeoutOn++;
 
             if(digitalRead(RASPBERRY_PI_STATUS))
-            //if (raspberryPiStatus->read())
             {
                 //Add some timeout also
+                timeoutOn = 0;
                 state = WAKEUP_STATE;
             }
             else if (timeoutOn >= onThreshold)
             {
                 //Turn Off 5V power supply
                 digitalWrite(POWER_ENABLE_5V, LOW);
-                //powerEnable5V->write(0);
+
+                pinMode(PB7, OUTPUT);
+                digitalWrite(PB7, HIGH);
+                delay(500);
+                digitalWrite(PB7, LOW);
+                delay(500);
+                digitalWrite(PB7, HIGH);
+                delay(500);
+                digitalWrite(PB7, LOW);
+                
                 //Reset timeout counter
                 timeoutOn = 0;
                 forceOffPeriodEnd = false;
@@ -71,6 +82,8 @@ void RaspberryPiControl::powerHandler(//DigitalIn *raspberryPiStatus,
         case WAKEUP_STATE:
             #ifdef DEBUG
                 Serial1.println("WAKEUP_STATE");
+                Serial1.print("timeoutON =");
+                Serial1.println(timeoutOn);
             #endif
             //Send sensor data and when wakeup period set, shutdown
             //In order for timeout to work, this function should be executed every 1s
@@ -78,7 +91,6 @@ void RaspberryPiControl::powerHandler(//DigitalIn *raspberryPiStatus,
             //Check status pin and then turn off power supply.
             //Or after timeout, turn off power supply anyway without waiting for status.
             if(!digitalRead(RASPBERRY_PI_STATUS))
-            //if (!raspberryPiStatus->read())
             {
                 timeoutReboot = 0; 
                 timeoutOn = 0;
@@ -92,32 +104,33 @@ void RaspberryPiControl::powerHandler(//DigitalIn *raspberryPiStatus,
             {
                 //Turn Off 5V power supply
                 digitalWrite(POWER_ENABLE_5V, LOW);
-                //powerEnable5V->write(0);
+
                 //Reset timeout counter
                 timeoutOn = 0;
                 forceOffPeriodEnd = false;
                 state = IDLE_STATE;
             }
-
             break;
 
         case REBOOT_DETECTION:
             #ifdef DEBUG
                 Serial1.println("REBOOT_DETECTION");
+                Serial1.print("TimeoutReboot = ");
+                Serial1.println(timeoutReboot);
             #endif
             //Wait for reboot timeout
             timeoutReboot++;
+
             if (timeoutReboot >= rebootThreshold)
             {
                 timeoutReboot = 0;
                 if(digitalRead(RASPBERRY_PI_STATUS))
-                //if(raspberryPiStatus->read())
+                    // RPi rebooted, go back to wake up
                     state = WAKEUP_STATE;
                 else
                 {
                     //Definitely turn off RPi power supply
                     digitalWrite(POWER_ENABLE_5V, LOW);
-                    //powerEnable5V->write(0);
                     forceOffPeriodEnd = false;
                     state = IDLE_STATE;
                 }

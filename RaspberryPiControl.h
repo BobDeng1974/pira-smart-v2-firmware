@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "app_config.h" 
 
+//#define DEBUG
 class RaspberryPiControl 
 {
 public:
@@ -22,9 +23,7 @@ public:
 
     void powerHandler(void);
 
-    void powerHandler(//DigitalIn *raspberryPiStatus, 
-                      //DigitalOut *powerEnable5V,
-                      uint32_t onThreshold,
+    void powerHandler(uint32_t onThreshold,
                       uint32_t offThreshold,
                       uint32_t wakeupThreshold,
                       uint32_t rebootThreshold,

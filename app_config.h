@@ -10,9 +10,7 @@
 // Pin defines 
 #define POWER_ENABLE_5V     (PB6) 
 #define FET_OUTPUT          (PA8) 
-// TODO RASPBERRY_PI_STATUS you have to set this pin in raspi software 
-#define RASPBERRY_PI_STATUS (PA7) //dummy
-// TODO I dont know if this is correct, output values are stuck at 255
+#define RASPBERRY_PI_STATUS (PB13)
 #define BATTERY_VOLTAGE     (STM32L0_ADC_CHANNEL_5)
 
 
