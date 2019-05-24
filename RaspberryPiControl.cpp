@@ -61,15 +61,6 @@ void RaspberryPiControl::powerHandler(uint32_t onThreshold,
             {
                 //Turn Off 5V power supply
                 digitalWrite(POWER_ENABLE_5V, LOW);
-
-                pinMode(PB7, OUTPUT);
-                digitalWrite(PB7, HIGH);
-                delay(500);
-                digitalWrite(PB7, LOW);
-                delay(500);
-                digitalWrite(PB7, HIGH);
-                delay(500);
-                digitalWrite(PB7, LOW);
                 
                 //Reset timeout counter
                 timeoutOn = 0;
