@@ -35,7 +35,8 @@
 
 #define DEFAULT_INPUT_BUFFER_SIZE     100
 #define DEFAULT_BAUDRATE              115200
-#define CR                            '\r'
+//#define CR                            '\r'
+
 typedef enum {
   dataMode,
   cmdMode
@@ -100,6 +101,7 @@ public:
   bool writeLocalCharacteristic(uint16_t handle, const char value[]) ;
   bool readLocalCharacteristic(uint16_t handle) ;
   int getConnectionStatus(void) ;
+  bool displayServerServices(void) ;
   inline const char* getPeerAddress() { return peerAddress ; } ;  
   inline const char* getBtAddress()   { return btAddress ; } ;
   inline const char* getDeviceName()  { return deviceName ; } ;

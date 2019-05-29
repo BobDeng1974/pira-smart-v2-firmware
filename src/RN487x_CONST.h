@@ -32,7 +32,7 @@
 #define DEFAULT_CMD_TIMEOUT   300   // default timeout
 #define RESET_CMD_TIMEOUT     1000
 #define CRLF                  "\r\n"
-#define CRA                    '\r'
+#define CRA                   '\r'  //CR was changed to CRA, as there are conflicts with STM32L0 library
 #define LF                    '\n'
 
 // ------------------- Commands -----------------------
@@ -83,6 +83,7 @@
 #define MAX_SETTINGS_LEN      (32u)
 #define GET_DEVICE_NAME       "GN"
 #define GET_CONNECTION_STATUS "GK"
+#define GET_SERVER_SERVICES   "LS"
 
 //--- Action Commands
 #define START_DEFAULT_ADV     "A"

@@ -1,3 +1,4 @@
+
 #include <Arduino.h>
 #include <stdint.h>
 #include <time.h>
@@ -19,13 +20,12 @@
 #define OFF_PERIOD_INIT_VALUE_s 7200
 #define RX_BUFFER_SIZE (7)        //Size in B, do not change, comunication protocol between Pira adn RPi depends on this
 #define WATCHDOG_RESET_VALUE_s (15000)
-#define bleSerial       Serial
+#define bleSerial Serial
 
 ISL1208_RTC rtc; 
 RaspberryPiControl raspberryPiControl;
 BatteryVoltage batteryVoltage;
 
-const static char DEVICE_NAME[] = "PiraSmart";
 uint32_t piraStatus;
 uint32_t setTimeValue;
 uint32_t onPeriodValue;
@@ -42,6 +42,14 @@ uint32_t resetCause;
 // Timer needed for interrupt
 TimerMillis periodicTimer;
 
+//Ble stuff
+const char* deviceName = "PiraSmart";
+const  char* piraServiceUUID = "0xB000";
+const uint8_t piraStatusCharacteristicLen = 4 ; // data length (in bytes)
+//char piraStatusPayload[piraStatusCharacteristicLen*2] ;
+const char* piraStatusPayload;
+const uint16_t piraStatusHandle = 0x01;
+
 // Watchdog is reseted here, sendTime flag is set here
 void periodicCallback(void)
 {
@@ -52,7 +60,7 @@ void periodicCallback(void)
     sendTime = 1; 
 }
 
-void uartCommandParse(uint8_t *rxBuffer, uint8_t len)
+void uartCommandParse(uint8_t *rxBuffer)
 {
     uint8_t firstChar = rxBuffer[0];
     uint8_t secondChar = rxBuffer[1];
@@ -157,7 +165,7 @@ void uartCommandReceive(void)
                     {
                         //Serial1.print("I received: ");
                         //Serial1.print(rxBuffer);
-                        uartCommandParse(rxBuffer, RX_BUFFER_SIZE);
+                        uartCommandParse(rxBuffer);
                         rxIndex = 0;
                     }
                     else
@@ -354,6 +362,44 @@ void setup(void)
     // RTC init
     init_rtc();
 
+////////////////////////////////////////////////////////
+
+    // Ble init 
+    Serial1.print("Cause for reset is: ");
+    Serial1.println(resetCause);
+
+    rn487xBle.hwInit() ;
+	bleSerial.begin(rn487xBle.getDefaultBaudRate()) ;
+	rn487xBle.initBleStream(&bleSerial) ;
+	if (rn487xBle.swInit())
+        Serial1.println("Bluetooth init done!");
+    else
+    {
+        Serial1.println("Bluetooth init failed!");
+        while(1);
+    }
+    rn487xBle.enterCommandMode() ;
+    rn487xBle.stopAdvertising() ;
+    rn487xBle.setAdvPower(5) ;
+    rn487xBle.setSerializedName(deviceName);
+    rn487xBle.clearAllServices() ;
+    rn487xBle.reboot() ;
+
+    rn487xBle.enterCommandMode() ;  
+    // Set a private service ...
+    rn487xBle.setServiceUUID(piraServiceUUID) ;
+    // which contains ...
+    rn487xBle.setCharactUUID("B003", WRITE_PROPERTY, piraStatusCharacteristicLen);       
+    // take into account the settings by issuing a reboot
+    rn487xBle.reboot() ;
+    rn487xBle.enterCommandMode() ;
+    // Clear adv. packet
+    rn487xBle.clearImmediateAdvertising() ;
+    // Start adv.
+    rn487xBle.startImmediateAdvertising(AD_TYPE_FLAGS, "06");
+    rn487xBle.startImmediateAdvertising(AD_TYPE_MANUFACTURE_SPECIFIC_DATA, "CD00FE14AD11CF40063F11E5BE3E0002A5D5C51B") ;
+
+////////////////////////////////////////////////////////
     //Set ON and OFF period values to 30min by default
     // Initialize variables
     sendTime = 0;
@@ -377,70 +423,87 @@ void setup(void)
 }
 
 void loop()
-{    
-    while (true) 
+{
+    uartCommandReceive();
+    STM32L0.wdtReset();
+
+    if (sendTime)   // Statement will be executed every second
     {
-        uartCommandReceive();
-        if (sendTime)   // Statement will be executed every second
-        {
-            sendTime = 0;
+        sendTime = 0;
 
-            // Get the current time from RTC 
-            time_t seconds = time();
+       
+        // Get the current time from RTC 
+        time_t seconds = time();
 #ifdef DEBUG
-            Serial1.print("Time as a basic string = ");
-            Serial1.println(ctime(&seconds));
+        Serial1.print("Time as a basic string = ");
+        Serial1.println(ctime(&seconds));
 #endif
-            // Write current time to containter variable which can be read over BLE
-            temp = ctime(&seconds);
-            memcpy(getTimeValue, temp, strlen((const char *)temp));
-            
-            // Calculate overview value
-            piraStatus = onPeriodValue - raspberryPiControl.timeoutOnGet();
-            // Get battery voltage in ADC counts
-            batteryLevelContainer = batteryVoltage.batteryLevelGet();
-           
+        // Write current time to containter variable which can be read over BLE
+        temp = ctime(&seconds);
+        memcpy(getTimeValue, temp, strlen((const char *)temp));
+        
+        // Calculate overview value
+        piraStatus = onPeriodValue - raspberryPiControl.timeoutOnGet();
+        // Get battery voltage in ADC counts
+        batteryLevelContainer = batteryVoltage.batteryLevelGet();
+
+        //sprintf(piraStatusPayload, "%d", piraStatus);
+        // Check the connection status 
+        //if (rn487xBle.getConnectionStatus())
+        //{
+        //    // Connected to a peer
+        //    Serial1.print("Connected to a peer central ");
+        //    Serial1.println(rn487xBle.getLastResponse()); 
+
+        //    //rn487xBle.writeLocalCharacteristic("0xB003", piraStatusPayload);
+        //}
+        //if(rn487xBle.readLocalCharacteristic(0x72))
+        //{
+        //    piraStatusPayload = rn487xBle.getLastResponse();
+        //    Serial1.print("Response is: ");
+        //    Serial1.println(rn487xBle.getLastResponse()); 
+        //}
+
 #ifdef SEND_TIME_AS_STRING
-            // Send time to RaspberryPi in a string format
-            Serial1.print("t:");
-            Serial1.println(getTimeValue);
+        // Send time to RaspberryPi in a string format
+        Serial1.print("t:");
+        Serial1.println(getTimeValue);
 #else
-            // Send time in seconds since Jan 1 1970 00:00:00
-            uartCommandSend('t', seconds);
+        // Send time in seconds since Jan 1 1970 00:00:00
+        //uartCommandSend('t', seconds);
 #endif
-            // Update status values
-            uartCommandSend('o', piraStatus);                                   // Seconds left before next power supply turn off
-            uartCommandSend('b', (uint32_t)batteryLevelContainer);              // Battery voltage 
-            uartCommandSend('p', onPeriodValue);
-            uartCommandSend('s', offPeriodValue);
-            uartCommandSend('r', rebootThresholdValue);
-            uartCommandSend('w', wakeupThresholdValue);
-            uartCommandSend('a', (uint32_t)digitalRead(RASPBERRY_PI_STATUS));   // Send RPi status pin value
-            uartCommandSend('c', resetCause);                                   //TODO test with vid    // Send reset cause
+        // Update status values
+        //uartCommandSend('o', piraStatus);                                   // Seconds left before next power supply turn off
+        //uartCommandSend('b', (uint32_t)batteryLevelContainer);              // Battery voltage 
+        //uartCommandSend('p', onPeriodValue);
+        //uartCommandSend('s', offPeriodValue);
+        //uartCommandSend('r', rebootThresholdValue);
+        //uartCommandSend('w', wakeupThresholdValue);
+        //uartCommandSend('a', (uint32_t)digitalRead(RASPBERRY_PI_STATUS));   // Send RPi status pin value
+        //uartCommandSend('c', resetCause);                                   //TODO test with vid    // Send reset cause
 
 #ifdef DEBUG
-            Serial1.print("Battery level in V = ");
-            Serial1.println((int)(batteryVoltage.batteryVoltageGet(batteryLevelContainer)*100));
-            Serial1.print("onPeriodValue =");
-            Serial1.println(onPeriodValue);
-            Serial1.print("offPeriodValue =");
-            Serial1.println(offPeriodValue);
-            Serial1.print("rebootThresholdValue = ");
-            Serial1.println(rebootThresholdValue);
-            Serial1.print("wakeupThresholdValue = ");
-            Serial1.println(wakeupThresholdValue);
-            Serial1.print("turnOnRpiState = ");
-            Serial1.println(turnOnRpiState);
-            Serial1.print("Status Pin = ");
-            Serial1.println(digitalRead(RASPBERRY_PI_STATUS));
-            Serial1.print("PiraStatus = ");
-            Serial1.println(piraStatus);
+        Serial1.print("Battery level in V = ");
+        Serial1.println((int)(batteryVoltage.batteryVoltageGet(batteryLevelContainer)*100));
+        Serial1.print("onPeriodValue =");
+        Serial1.println(onPeriodValue);
+        Serial1.print("offPeriodValue =");
+        Serial1.println(offPeriodValue);
+        Serial1.print("rebootThresholdValue = ");
+        Serial1.println(rebootThresholdValue);
+        Serial1.print("wakeupThresholdValue = ");
+        Serial1.println(wakeupThresholdValue);
+        Serial1.print("turnOnRpiState = ");
+        Serial1.println(turnOnRpiState);
+        Serial1.print("Status Pin = ");
+        Serial1.println(digitalRead(RASPBERRY_PI_STATUS));
+        Serial1.print("PiraStatus = ");
+        Serial1.println(piraStatus);
 #endif
-            raspberryPiControl.powerHandler(onPeriodValue,
-                                            offPeriodValue,
-                                            wakeupThresholdValue,
-                                            rebootThresholdValue,
-                                            turnOnRpiState);
-        }
+        raspberryPiControl.powerHandler(onPeriodValue,
+                                        offPeriodValue,
+                                        wakeupThresholdValue,
+                                        rebootThresholdValue,
+                                        turnOnRpiState);
     }
 }

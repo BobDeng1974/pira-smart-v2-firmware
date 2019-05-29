@@ -39,7 +39,7 @@
   #define BT_RESET  (PA4)
 #endif
 
-//#define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #define debugPrintLn(...) { if (this->diagStream) this->diagStream->println(__VA_ARGS__) ;  }
@@ -252,7 +252,7 @@ void Rn487xBle::sendCommand(String stream)
   
   this->flush() ;
   cleanInputBuffer() ;
-  stream.concat(CR) ;
+  stream.concat(CRA) ;
   bleSerial->print(stream) ;
 }
 
@@ -1360,6 +1360,7 @@ int Rn487xBle::getConnectionStatus(void)
     {
       if (readUntilCR() > 0)
       {
+        debugPrint("#") ;
         // Check for the connection
         if (strstr(this->uartBuffer, NONE_RESP) != NULL)
         {
@@ -1370,11 +1371,35 @@ int Rn487xBle::getConnectionStatus(void)
         return true ;
       }
     }
+    debugPrint("$") ;
+    debugPrint(previous) ;
+    delay(10);
+
   }
   debugPrint("[getConnectionStatus] Timeout without a response !") ;
   return -1 ;
 }
 
+bool Rn487xBle::displayServerServices(void)
+{
+  debugPrint("[displayServerServices]") ;
+
+  uint16_t timeout = DEFAULT_CMD_TIMEOUT ;
+  unsigned long previous ;
+  this->flush() ;
+  sendCommand(GET_SERVER_SERVICES) ;
+  previous = millis() ;
+  while (millis() - previous < timeout)
+  {
+    debugPrint(".") ;
+    if (this->bleSerial->available() > 0)
+    {
+        debugPrint(bleSerial->readString());
+        return true ;
+    }
+  }
+  return false ;
+}
 // ---------------------------------------- Private section ----------------------------------------
 
 // *********************************************************************************
@@ -1554,7 +1579,7 @@ operationMode_t Rn487xBle::getOperationMode(void)
 // *********************************************************************************
 uint16_t Rn487xBle::readUntilCR(char* buffer, uint16_t size, uint16_t start)
 {
-  int len = this->bleSerial->readBytesUntil(CR, buffer + start, size) ;
+  int len = this->bleSerial->readBytesUntil(CRA, buffer + start, size) ;
   return len ;
 }
 
