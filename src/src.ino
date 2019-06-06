@@ -1,12 +1,10 @@
 #include <Arduino.h>
 #include "RN487x_BLE.h"
-#include "STM32L0.h"            
+//#include "STM32L0.h"            
 #include <string.h>
 #include <Stream.h>
-#include "TimerMillis.h"
-
-#define debugSerial Serial1
-#define bleSerial Serial
+//#include "TimerMillis.h"
+#include "app_config.h"
 
 /* Analog pin that temp sensor is connected to */
 #define TEMP_SENSOR A0
@@ -52,30 +50,30 @@ const char* ledPayload;
 // Temp
 const char* temperatureCharacteristicUUID = "BF3FBD80063F11E59E690002A5D5C504";  // custom characteristic GATT
 const uint8_t temperatureCharacteristicLen = 2;  // data length (in bytes)
-const uint16_t temperatureHandle = 0x7B;
+const uint16_t temperatureHandle = 0x7A;
 char temperaturePayload[temperatureCharacteristicLen*2 + 1];
 
 // Battery
 const char* batteryCharacteristicUUID = "BF3FBD80063F11E59E690002A5D5C505";  // custom characteristic GATT
 const uint8_t batteryCharacteristicLen = 2;  // data length (in bytes)
-const uint16_t batteryHandle = 0x7E;
+const uint16_t batteryHandle = 0x7D;
 char batteryPayload[batteryCharacteristicLen*2 + 1];
 
-TimerMillis periodicTimer;
+/*TimerMillis periodicTimer;
 
 void periodicCallback(void)
 {
     debugSerial.println("TIMER!!!!");
 }
+*/
 void setup()
 {
   
   debugSerial.begin(115200);
   // Wait for PC to connect, give up after SERIAL_TIMEOUT_MS
   while ((!debugSerial) && (millis() < SERIAL_TIMEOUT_MS));
-debugSerial.print("REASON FOR RESET: ");
-debugSerial.println(STM32L0.resetCause());
-
+  debugSerial.print("REASON FOR RESET: ");
+//    debugSerial.println(STM32L0.resetCause());
 
   // Set the optional debug stream
   rn487xBle.setDiag(debugSerial);
@@ -83,9 +81,11 @@ debugSerial.println(STM32L0.resetCause());
   rn487xBle.hwInit();
   // Open the communication pipe with the BLE module
   bleSerial.begin(rn487xBle.getDefaultBaudRate());
-  // Assign the BLE serial port to the BLE library
-  rn487xBle.initBleStream(&bleSerial);
   // Finalize the init. process
+  if(rn487xBle.enterCommandMode())
+        debugSerial.println("Uspelo");
+else
+        debugSerial.println("Ni Uspelo");
     while(1)
     {
      if (rn487xBle.swInit())
@@ -125,7 +125,6 @@ debugSerial.println(STM32L0.resetCause());
   // ...a light sensor (unused) characteristic; readable and can perform notification, 2-octets size
   //rn487xBle.setCharactUUID(PIRA_STATUS_CHARACTERISTIC_UUID, READ_PROPERTY, piraStatusLen);
   //rn487xBle.setCharactUUID(readUuid, WRITE_PROPERTY, readLen);
-
 // which contains ...
   // ...a light sensor (unused) characteristic; readable and can perform notification, 2-octets size
   rn487xBle.setCharactUUID(lightCharacteristicUUID, NOTIFY_PROPERTY, lightCharacteristicLen);
@@ -153,7 +152,6 @@ debugSerial.println(STM32L0.resetCause());
         rn487xBle.displayServerServices();
         debugSerial.println(rn487xBle.getLastResponse());
         delay(500);
-    periodicTimer.start(periodicCallback, 0, 5000); //Starts immediately, repeats every 1000 ms
 }
 int i = 0;
 void loop()

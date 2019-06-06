@@ -25,19 +25,10 @@
 */
 
 #include "RN487x_BLE.h"
+#include <Arduino.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#if defined(ARDUINO_SODAQ_ONE)
-  #define BLUETOOTH_WAKE  (PA0) // A6/D6
-  #define BT_RESET  (PA4) //A2/D2
-#endif
-#define BLUETOOTH_WAKE  (PA0) // A6/D6
-// Bluetooth Reset signal is supported from the BSP version SODAQ_SAMD_BOARD_1.6.10
-// Redefine the pin in case of using prior version than v1.6.9
-#ifndef BT_RESET
-  #define BT_RESET  (PA4)
-#endif
+#include <string.h>
 
 #define DEBUG
 
@@ -200,9 +191,10 @@ bool Rn487xBle::enterCommandMode(void)
   // To enter Command mode from Data mode, type $$$ character sequence after 100 ms delay before the first $
   delay(DELAY_BEFORE_CMD) ;
 
-  this->bleSerial->print(ENTER_CMD) ;
+  bleSerial.print(ENTER_CMD) ;
   if (expectResponse(PROMPT, DEFAULT_CMD_TIMEOUT))
   {
+  debugPrintLn("[Succesfull enterCommandMode]") ;
     setOperationMode(cmdMode) ;
     return true ;
   }
@@ -253,14 +245,8 @@ void Rn487xBle::sendCommand(String stream)
   this->flush() ;
   cleanInputBuffer() ;
   stream.concat(CRA) ;
-  bleSerial->print(stream) ;
+  bleSerial.print(stream) ;
 }
-
-void Rn487xBle::sendData(char *data, uint16_t dataLen)
-{
-  bleSerial->write(data, dataLen) ;
-}
-
 
 // *********************************************************************************
 // Retrieve the BT Address from the settings in configuration flash
@@ -307,7 +293,7 @@ bool Rn487xBle::getFirmwareVersion(void)
   while (millis() - previous < timeout)
   {
     debugPrint(".") ;
-    if (this->bleSerial->available() > 0)
+    if (bleSerial.available() > 0)
     {
       if (readUntilCR() > 0)
       {
@@ -1113,7 +1099,7 @@ bool Rn487xBle::getRSSI(void)
   while (millis() - previous < timeout)
   {
     debugPrint(".") ;
-    if (this->bleSerial->available() > 0)
+    if (bleSerial.available() > 0)
     {
       if (readUntilCR() > 0)
       {
@@ -1183,6 +1169,9 @@ bool Rn487xBle::setServiceUUID(const char *uuid)
   this->flush() ;
   memcpy(uartBuffer, DEFINE_SERVICE_UUID, len) ; 
   memcpy(&uartBuffer[len], uuid, newLen) ;
+  debugPrint("We will send: ") ;
+  debugPrintLn(uartBuffer);
+    
   sendCommand(uartBuffer) ;
   if (expectResponse(AOK_RESP, DEFAULT_CMD_TIMEOUT))
   {
@@ -1222,7 +1211,6 @@ bool Rn487xBle::setCharactUUID(const char *uuid, uint8_t property, uint8_t octet
     debugPrintLn("Octet Length is out of range (0x01-0x14)") ;
   }
 
-  uint8_t len = strlen(DEFINE_CHARACT_UUID) ;
   uint8_t newLen = strlen(uuid) ;
 
   if (newLen == PRIVATE_SERVICE_LEN)
@@ -1240,15 +1228,18 @@ bool Rn487xBle::setCharactUUID(const char *uuid, uint8_t property, uint8_t octet
     return false ;
   }
 
-  String str = DEFINE_CHARACT_UUID ;
+  char str[200];
   char c[2] ;
-  str.concat(uuid) ;
-  str.concat(',') ;
+
+  strcpy(str, DEFINE_CHARACT_UUID) ;
+  strcat(str, uuid) ;
+
+  strcat(str, ",") ;
   sprintf(c, "%02X", property) ;
-  str.concat(c) ;
-  str.concat(',') ;
-  sprintf(c, "%02X", octetLen) ;
-  str.concat(c) ;
+  strcat(str, c) ;
+  strcat(str, ",") ;
+  sprintf(c, "%02X",  octetLen) ;
+  strcat(str, c) ;
 
   sendCommand(str) ;
   if (expectResponse(AOK_RESP, DEFAULT_CMD_TIMEOUT))
@@ -1318,7 +1309,7 @@ bool Rn487xBle::readLocalCharacteristic(uint16_t handle)
   while (millis() - previous < timeout)
   {
     debugPrint(".") ;
-    if (this->bleSerial->available() > 0)
+    if (bleSerial.available() > 0)
     {
       if (readUntilCR() > 0)
       {
@@ -1356,11 +1347,10 @@ int Rn487xBle::getConnectionStatus(void)
   while (millis() - previous < timeout)
   {
     debugPrint(".") ;
-    if (this->bleSerial->available() > 0)
+    if (bleSerial.available() > 0)
     {
       if (readUntilCR() > 0)
       {
-        debugPrint("#") ;
         // Check for the connection
         if (strstr(this->uartBuffer, NONE_RESP) != NULL)
         {
@@ -1371,10 +1361,6 @@ int Rn487xBle::getConnectionStatus(void)
         return true ;
       }
     }
-    debugPrint("$") ;
-    debugPrint(previous) ;
-    delay(10);
-
   }
   debugPrint("[getConnectionStatus] Timeout without a response !") ;
   return -1 ;
@@ -1392,9 +1378,9 @@ bool Rn487xBle::displayServerServices(void)
   while (millis() - previous < timeout)
   {
     debugPrint(".") ;
-    if (this->bleSerial->available() > 0)
+    if (bleSerial.available() > 0)
     {
-        debugPrint(bleSerial->readString());
+        debugPrint(bleSerial.readString());
         return true ;
     }
   }
@@ -1458,7 +1444,7 @@ bool Rn487xBle::getSettings(uint16_t addr, uint8_t sizeToRead)
   while (millis() - previous < timeout)
   {
     debugPrint(".") ;
-    if (this->bleSerial->available() > 0)
+    if (bleSerial.available() > 0)
     {
       if (readUntilCR() > 0)
       {
@@ -1506,7 +1492,7 @@ bool Rn487xBle::setSettings(uint16_t addr, const char *data)
   while (millis() - previous < timeout)
   {
     debugPrint(".") ;
-    if (this->bleSerial->available() > 0)
+    if (bleSerial.available() > 0)
     {
       if (readUntilCR() > 0)
       {
@@ -1537,9 +1523,9 @@ void Rn487xBle::flush(void)
 // *********************************************************************************
 void Rn487xBle::cleanInputBuffer(void)
 {
-  while (bleSerial->available() > 0)
+  while (bleSerial.available() > 0)
   {
-    bleSerial->read() ;
+    bleSerial.read() ;
   }
 }
 
@@ -1565,7 +1551,6 @@ operationMode_t Rn487xBle::getOperationMode(void)
   return(operationMode) ;
 }
 
-
 // *********************************************************************************
 // Reads a buffer until the carriage return
 // *********************************************************************************
@@ -1579,10 +1564,9 @@ operationMode_t Rn487xBle::getOperationMode(void)
 // *********************************************************************************
 uint16_t Rn487xBle::readUntilCR(char* buffer, uint16_t size, uint16_t start)
 {
-  int len = this->bleSerial->readBytesUntil(CRA, buffer + start, size) ;
+  int len = bleSerial.readBytesUntil(CRA, buffer + start, size) ;
   return len ;
 }
-
 
 // *********************************************************************************
 // Reads UART stream, parse the reception buffer

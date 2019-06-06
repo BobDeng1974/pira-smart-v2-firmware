@@ -26,16 +26,16 @@
 
 #ifndef __RN487x_BLE
 #define __RN487x_BLE
-
-#include "RN487x_CONST.h"
+#include <Arduino.h>
 #include <string.h>
 #include <Stream.h>
 #include <stdbool.h>
-#include <Arduino.h>
+
+#include "RN487x_CONST.h"
+#include "app_config.h"
 
 #define DEFAULT_INPUT_BUFFER_SIZE     100
 #define DEFAULT_BAUDRATE              115200
-//#define CR                            '\r'
 
 typedef enum {
   dataMode,
@@ -51,7 +51,7 @@ public:
   virtual ~Rn487xBle() ;
   uint32_t getDefaultBaudRate(void) { return(DEFAULT_BAUDRATE) ; } ;
   void setDiag(Stream& stream) { diagStream = &stream ; } ;
-  inline void initBleStream(Uart *stream) { this->bleSerial = stream ; cleanInputBuffer() ; } ;
+  inline void initBleStream() {} ;
   bool swInit(void) ;
   void hwInit(void) ;
   void hwReset(void) ;
@@ -60,7 +60,6 @@ public:
   bool enterDataMode(void) ;
   bool enterCommandMode(void) ;
   void sendCommand(String stream) ;
-  void sendData(char *data, uint16_t dataLen) ;
   bool disableBeacon(void) ;
   bool enableBeacon(void) ;
   bool enableBeaconAndAdv(void) ;
@@ -108,10 +107,10 @@ public:
   inline const char* getLastResponse() { return uartBuffer ; } ;
   inline bool isInputBuffer() 
   { 
-    if (bleSerial->available() > 0) return true ; 
+    if (bleSerial.available() > 0) return true ; 
     return false ; 
   }
-  inline char getInputBuffer(){ return bleSerial->read() ; } ;
+  inline char getInputBuffer(){ return bleSerial.read() ; } ;
   
 // --------------------------------------- Protected section ---------------------------------------
 protected:
@@ -130,7 +129,6 @@ private:
   uint16_t readUntilCR() { return readUntilCR(this->uartBuffer, this->uartBufferLen) ; } ;
   bool expectResponse(const char* expectedResponse, uint16_t timeout) ;
 
-  Uart *bleSerial ;
   Stream* diagStream ;
   char *uartBuffer ;
   int uartBufferLen ;
