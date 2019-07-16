@@ -59,7 +59,8 @@ const uint8_t batteryCharacteristicLen = 2;  // data length (in bytes)
 const uint16_t batteryHandle = 0x7D;
 char batteryPayload[batteryCharacteristicLen*2 + 1];
 
-/*TimerMillis periodicTimer;
+/*
+TimerMillis periodicTimer;
 
 void periodicCallback(void)
 {
@@ -73,7 +74,7 @@ void setup()
   // Wait for PC to connect, give up after SERIAL_TIMEOUT_MS
   while ((!debugSerial) && (millis() < SERIAL_TIMEOUT_MS));
   debugSerial.print("REASON FOR RESET: ");
-//    debugSerial.println(STM32L0.resetCause());
+  //debugSerial.println(STM32L0.resetCause());
 
   // Set the optional debug stream
   rn487xBle.setDiag(debugSerial);
@@ -82,24 +83,20 @@ void setup()
   // Open the communication pipe with the BLE module
   bleSerial.begin(rn487xBle.getDefaultBaudRate());
   // Finalize the init. process
-  if(rn487xBle.enterCommandMode())
-        debugSerial.println("Uspelo");
-else
-        debugSerial.println("Ni Uspelo");
-    while(1)
-    {
-     if (rn487xBle.swInit())
-      {
-        debugSerial.println("Init. procedure done!");
-        break;
-      }
-      else
-      {
-        debugSerial.println("Init. procedure failed!");
-        delay(500);
-      }
+  while(1)
+  {
+   if (rn487xBle.swInit())
+   {
+     debugSerial.println("Init. procedure done!");
+     break;
+   }
+   else
+   {
+     debugSerial.println("Init. procedure failed!");
+     delay(500);
+   }
 
-    }
+  }
    
   // Fist, enter into command mode
   rn487xBle.enterCommandMode();
@@ -149,9 +146,11 @@ else
   debugSerial.println("================================================");
   debugSerial.println("You can now establish a connection from the Microchip SmartDiscovery App");
   debugSerial.print("with the board: ") ; debugSerial.println(rn487xBle.getDeviceName());
-        rn487xBle.displayServerServices();
-        debugSerial.println(rn487xBle.getLastResponse());
-        delay(500);
+  rn487xBle.displayServerServices();
+  debugSerial.println(rn487xBle.getLastResponse());
+  delay(500);
+  // periodicCallback must be attached after I2C is initialized
+  //periodicTimer.start(periodicCallback, 0, 1000); //Starts immediately, repeats every 1000 ms
 }
 int i = 0;
 void loop()

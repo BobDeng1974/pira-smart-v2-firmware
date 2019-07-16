@@ -7,8 +7,8 @@
 //    #define DEBUG_BLE
 //    #define SEND_TIME_AS_STRING
 
-#define debugSerial Serial
-#define bleSerial Serial1
+#define debugSerial Serial1
+#define bleSerial Serial
 
 // Pira pin defines 
 #define POWER_ENABLE_5V     (PB6) 
