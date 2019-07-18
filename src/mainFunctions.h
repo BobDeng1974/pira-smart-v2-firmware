@@ -28,7 +28,6 @@ void initRtc();
 time_t time();
 void time(time_t t);
 
-
 //I2C related funtions
 char read8(char addr, char reg);
 void write8(char addr, char reg, char data);

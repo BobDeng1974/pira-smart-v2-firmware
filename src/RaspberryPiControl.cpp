@@ -19,9 +19,9 @@ void RaspberryPiControl::powerHandler(uint32_t onThreshold,
     {
         case IDLE_STATE:
 #ifdef DEBUG
-            Serial1.println("IDLE_STATE");
-            Serial1.print("timeoutOff = ");
-            Serial1.println(timeoutOff);
+            raspiSerial.println("IDLE_STATE");
+            raspiSerial.print("timeoutOff = ");
+            raspiSerial.println(timeoutOff);
 #endif
             //Check if we need to wakeup RaspberryPi
             timeoutOff++;
@@ -43,9 +43,9 @@ void RaspberryPiControl::powerHandler(uint32_t onThreshold,
 
         case WAIT_STATUS_ON_STATE:
 #ifdef DEBUG
-            Serial1.println("WAIT_STATUS_ON_STATE");
-            Serial1.print("timeoutON = ");
-            Serial1.println(timeoutOn);
+            raspiSerial.println("WAIT_STATUS_ON_STATE");
+            raspiSerial.print("timeoutON = ");
+            raspiSerial.println(timeoutOn);
 #endif
             //Wait when RaspberryPi pulls up STATUS pin
             //NOTE: Temporarely check reversed logic
@@ -72,9 +72,9 @@ void RaspberryPiControl::powerHandler(uint32_t onThreshold,
 
         case WAKEUP_STATE:
 #ifdef DEBUG
-            Serial1.println("WAKEUP_STATE");
-            Serial1.print("timeoutON =");
-            Serial1.println(timeoutOn);
+            raspiSerial.println("WAKEUP_STATE");
+            raspiSerial.print("timeoutON =");
+            raspiSerial.println(timeoutOn);
 #endif
             //Send sensor data and when wakeup period set, shutdown
             //In order for timeout to work, this function should be executed every 1s
@@ -105,9 +105,9 @@ void RaspberryPiControl::powerHandler(uint32_t onThreshold,
 
         case REBOOT_DETECTION:
 #ifdef DEBUG
-            Serial1.println("REBOOT_DETECTION");
-            Serial1.print("TimeoutReboot = ");
-            Serial1.println(timeoutReboot);
+            raspiSerial.println("REBOOT_DETECTION");
+            raspiSerial.print("TimeoutReboot = ");
+            raspiSerial.println(timeoutReboot);
 #endif
             //Wait for reboot timeout
             timeoutReboot++;

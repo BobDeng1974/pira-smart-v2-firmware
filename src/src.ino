@@ -72,8 +72,8 @@ void setup(void)
     Wire.begin();
 
     // UART needs to be initialized first to use it for communication with RPi
-    Serial1.begin(115200);
-    while(!Serial1){}
+    raspiSerial.begin(115200);
+    while(!raspiSerial){}
 
     // RTC init
     initRtc();
@@ -112,8 +112,8 @@ void loop()
             // Get the current time from RTC 
             time_t seconds = time();
 #ifdef DEBUG
-            Serial1.print("Time as a basic string = ");
-            Serial1.println(ctime(&seconds));
+            raspiSerial.print("Time as a basic string = ");
+            raspiSerial.println(ctime(&seconds));
 #endif
             // Write current time to containter variable which can be read over BLE
             temp = ctime(&seconds);
@@ -126,8 +126,8 @@ void loop()
            
 #ifdef SEND_TIME_AS_STRING
             // Send time to RaspberryPi in a string format
-            Serial1.print("t:");
-            Serial1.println(getTimeValue);
+            raspiSerial.print("t:");
+            raspiSerial.println(getTimeValue);
 #else
             // Send time in seconds since Jan 1 1970 00:00:00
             uartCommandSend('t', seconds);
@@ -143,22 +143,22 @@ void loop()
             uartCommandSend('c', resetCause);                                   //TODO test with vid    // Send reset cause
 
 #ifdef DEBUG
-            Serial1.print("Battery level in V = ");
-            Serial1.println((int)(batteryVoltage.batteryVoltageGet(batteryLevelContainer)*100));
-            Serial1.print("onPeriodValue =");
-            Serial1.println(onPeriodValue);
-            Serial1.print("offPeriodValue =");
-            Serial1.println(offPeriodValue);
-            Serial1.print("rebootThresholdValue = ");
-            Serial1.println(rebootThresholdValue);
-            Serial1.print("wakeupThresholdValue = ");
-            Serial1.println(wakeupThresholdValue);
-            Serial1.print("turnOnRpiState = ");
-            Serial1.println(turnOnRpiState);
-            Serial1.print("Status Pin = ");
-            Serial1.println(digitalRead(RASPBERRY_PI_STATUS));
-            Serial1.print("PiraStatus = ");
-            Serial1.println(piraStatus);
+            raspiSerial.print("Battery level in V = ");
+            raspiSerial.println((int)(batteryVoltage.batteryVoltageGet(batteryLevelContainer)*100));
+            raspiSerial.print("onPeriodValue =");
+            raspiSerial.println(onPeriodValue);
+            raspiSerial.print("offPeriodValue =");
+            raspiSerial.println(offPeriodValue);
+            raspiSerial.print("rebootThresholdValue = ");
+            raspiSerial.println(rebootThresholdValue);
+            raspiSerial.print("wakeupThresholdValue = ");
+            raspiSerial.println(wakeupThresholdValue);
+            raspiSerial.print("turnOnRpiState = ");
+            raspiSerial.println(turnOnRpiState);
+            raspiSerial.print("Status Pin = ");
+            raspiSerial.println(digitalRead(RASPBERRY_PI_STATUS));
+            raspiSerial.print("PiraStatus = ");
+            raspiSerial.println(piraStatus);
 #endif
             raspberryPiControl.powerHandler(onPeriodValue,
                                             offPeriodValue,

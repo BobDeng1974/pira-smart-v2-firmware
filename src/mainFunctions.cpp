@@ -19,27 +19,27 @@ void uartCommandParse(uint8_t *rxBuffer, uint8_t len)
         switch(firstChar)
         {
             case 't':
-                //Serial1.println("t: received");
+                //raspiSerial.println("t: received");
                 time((time_t)data);
                 break;
             case 'p':
-                //Serial1.println("p: received");
+                //raspiSerial.println("p: received");
                 onPeriodValue = data;
                 break;
             case 's':
-                //Serial1.println("s: received");
+                //raspiSerial.println("s: received");
                 offPeriodValue = data;
                 break;
             case 'c':
-                //Serial1.println("c: received");
-                //Serial1.println("To be defined how to react on c: command");
+                //raspiSerial.println("c: received");
+                //raspiSerial.println("To be defined how to react on c: command");
                 break;
             case 'r':
-                //Serial1.println("r: received");
+                //raspiSerial.println("r: received");
                 rebootThresholdValue = data;
                 break;
             case 'w':
-                //Serial1.println("w: received");
+                //raspiSerial.println("w: received");
                 wakeupThresholdValue = data;
                 break;
             default:
@@ -48,7 +48,7 @@ void uartCommandParse(uint8_t *rxBuffer, uint8_t len)
     }
     else 
         // TODO This serial will go back to RPI, should you send something else? 
-        Serial1.print("Incorrect format, this shouldn't happen!");
+        raspiSerial.print("Incorrect format, this shouldn't happen!");
 }
 
 /**
@@ -61,13 +61,13 @@ void uartCommandParse(uint8_t *rxBuffer, uint8_t len)
  */
 void uartCommandSend(char command, uint32_t data)
 {
-    Serial1.write((int)command);
-    Serial1.write(':');
-    Serial1.write((int)((data & 0xFF000000)>>24));
-    Serial1.write((int)((data & 0x00FF0000)>>16));
-    Serial1.write((int)((data & 0x0000FF00)>>8));
-    Serial1.write((int)( data & 0x000000FF));
-    Serial1.write('\n');
+    raspiSerial.write((int)command);
+    raspiSerial.write(':');
+    raspiSerial.write((int)((data & 0xFF000000)>>24));
+    raspiSerial.write((int)((data & 0x00FF0000)>>16));
+    raspiSerial.write((int)((data & 0x0000FF00)>>8));
+    raspiSerial.write((int)( data & 0x000000FF));
+    raspiSerial.write('\n');
 }
 
 /**
@@ -82,14 +82,14 @@ void uartCommandReceive(void)
 {
     uint8_t rxBuffer[RX_BUFFER_SIZE] = "";     
     uint8_t rxIndex = 0;
-    if (Serial1.available() != 0)
+    if (raspiSerial.available() != 0)
     {
         delay(10); // Without delay code thinks that it gets only first character first
                    // and then the rest of the string, final result is that they are received seperatly.
                    // A short delay prevents that. 
-        while (Serial1.available() > 0)
+        while (raspiSerial.available() > 0)
         {
-            rxBuffer[rxIndex] = Serial1.read();
+            rxBuffer[rxIndex] = raspiSerial.read();
 
             if (rxIndex == 0)
             {
@@ -123,8 +123,8 @@ void uartCommandReceive(void)
                     //All data withing the packet has been received, parse the packet and execute commands
                     if (rxIndex == (RX_BUFFER_SIZE - 1))
                     {
-                        //Serial1.print("I received: ");
-                        //Serial1.print(rxBuffer);
+                        //raspiSerial.print("I received: ");
+                        //raspiSerial.print(rxBuffer);
                         uartCommandParse(rxBuffer, RX_BUFFER_SIZE);
                         rxIndex = 0;
                     }
@@ -171,7 +171,7 @@ void initRtc()
     if(rtc.isRtcActive()) //checks if the RTC is available on the I2C bus
     {
 #ifdef DEBUG
-        Serial1.println("RTC detected!");
+        raspiSerial.println("RTC detected!");
 #endif
         //Check if we need to reset the time
         uint8_t powerFailed = read8(ISL1208_ADDRESS, ISL1208_SR);   //read 1 byte of data
@@ -180,7 +180,7 @@ void initRtc()
         {
 #ifdef DEBUG
             //The time has been lost due to a power complete power failure
-            Serial1.println("RTC has lost power! Resetting time...");
+            raspiSerial.println("RTC has lost power! Resetting time...");
 #endif 
             //Set RTC time to Mon, 1 Jan 2018 00:00:00
             time(TIME_INIT_VALUE);
@@ -189,7 +189,7 @@ void initRtc()
     else
     {
 #ifdef DEBUG
-        Serial1.println("RTC not detected!");
+        raspiSerial.println("RTC not detected!");
 #endif
     }
 }
