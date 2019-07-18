@@ -2,7 +2,7 @@
 #define RASPBERRY_PI_CONTROL_H
 
 #include <stdint.h>
-#include "app_config.h" 
+#include "board.h" 
 
 //#define DEBUG
 class RaspberryPiControl 

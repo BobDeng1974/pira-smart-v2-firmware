@@ -18,11 +18,11 @@ void RaspberryPiControl::powerHandler(uint32_t onThreshold,
     switch(state)
     {
         case IDLE_STATE:
-            #ifdef DEBUG
-                Serial1.println("IDLE_STATE");
-                Serial1.print("timeoutOff = ");
-                Serial1.println(timeoutOff);
-            #endif
+#ifdef DEBUG
+            Serial1.println("IDLE_STATE");
+            Serial1.print("timeoutOff = ");
+            Serial1.println(timeoutOff);
+#endif
             //Check if we need to wakeup RaspberryPi
             timeoutOff++;
 
@@ -42,11 +42,11 @@ void RaspberryPiControl::powerHandler(uint32_t onThreshold,
             break;
 
         case WAIT_STATUS_ON_STATE:
-            #ifdef DEBUG
-                Serial1.println("WAIT_STATUS_ON_STATE");
-                Serial1.print("timeoutON = ");
-                Serial1.println(timeoutOn);
-            #endif
+#ifdef DEBUG
+            Serial1.println("WAIT_STATUS_ON_STATE");
+            Serial1.print("timeoutON = ");
+            Serial1.println(timeoutOn);
+#endif
             //Wait when RaspberryPi pulls up STATUS pin
             //NOTE: Temporarely check reversed logic
             timeoutOn++;
@@ -71,11 +71,11 @@ void RaspberryPiControl::powerHandler(uint32_t onThreshold,
             break;
 
         case WAKEUP_STATE:
-            #ifdef DEBUG
-                Serial1.println("WAKEUP_STATE");
-                Serial1.print("timeoutON =");
-                Serial1.println(timeoutOn);
-            #endif
+#ifdef DEBUG
+            Serial1.println("WAKEUP_STATE");
+            Serial1.print("timeoutON =");
+            Serial1.println(timeoutOn);
+#endif
             //Send sensor data and when wakeup period set, shutdown
             //In order for timeout to work, this function should be executed every 1s
 
@@ -104,11 +104,11 @@ void RaspberryPiControl::powerHandler(uint32_t onThreshold,
             break;
 
         case REBOOT_DETECTION:
-            #ifdef DEBUG
-                Serial1.println("REBOOT_DETECTION");
-                Serial1.print("TimeoutReboot = ");
-                Serial1.println(timeoutReboot);
-            #endif
+#ifdef DEBUG
+            Serial1.println("REBOOT_DETECTION");
+            Serial1.print("TimeoutReboot = ");
+            Serial1.println(timeoutReboot);
+#endif
             //Wait for reboot timeout
             timeoutReboot++;
 

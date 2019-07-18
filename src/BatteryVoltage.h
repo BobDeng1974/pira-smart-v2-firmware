@@ -2,7 +2,7 @@
 #define BATTERY_VOLTAGE_H
 
 #include <stdint.h>
-#include "app_config.h" 
+#include "board.h" 
 #include "stm32l0_adc.h"
 
 class BatteryVoltage
