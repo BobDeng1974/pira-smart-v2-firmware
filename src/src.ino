@@ -30,6 +30,7 @@ uint8_t sendTime;
 uint16_t batteryLevelContainer;
 bool turnOnRpiState;
 uint32_t resetCause;
+time_t seconds; 
 
 // Timer needed for interrupt
 TimerMillis periodicTimer;
@@ -102,69 +103,37 @@ void setup(void)
 
 void loop()
 {    
-    while (true) 
+    uartCommandReceive();
+    if (sendTime)   // Statement will be executed every second
     {
-        uartCommandReceive();
-        if (sendTime)   // Statement will be executed every second
-        {
-            sendTime = 0;
+        sendTime = 0; // Reset flag
 
-            // Get the current time from RTC 
-            time_t seconds = time();
+        // Get the current time from RTC 
+        seconds = time();
 #ifdef DEBUG
-            raspiSerial.print("Time as a basic string = ");
-            raspiSerial.println(ctime(&seconds));
+        raspiSerial.print("Time as a basic string = ");
+        raspiSerial.println(ctime(&seconds));
 #endif
-            // Write current time to containter variable which can be read over BLE
-            temp = ctime(&seconds);
-            memcpy(getTimeValue, temp, strlen((const char *)temp));
-            
-            // Calculate overview value
-            piraStatus = onPeriodValue - raspberryPiControl.timeoutOnGet();
-            // Get battery voltage in ADC counts
-            batteryLevelContainer = batteryVoltage.batteryLevelGet();
+        // Write current time to containter variable which can be read over BLE
+        temp = ctime(&seconds);
+        memcpy(getTimeValue, temp, strlen((const char *)temp));
+        
+        // Calculate overview value
+        piraStatus = onPeriodValue - raspberryPiControl.timeoutOnGet();
+
+        // Get battery voltage in ADC counts
+        batteryLevelContainer = batteryVoltage.batteryLevelGet();
            
-#ifdef SEND_TIME_AS_STRING
-            // Send time to RaspberryPi in a string format
-            raspiSerial.print("t:");
-            raspiSerial.println(getTimeValue);
-#else
-            // Send time in seconds since Jan 1 1970 00:00:00
-            uartCommandSend('t', seconds);
-#endif
-            // Update status values
-            uartCommandSend('o', piraStatus);                                   // Seconds left before next power supply turn off
-            uartCommandSend('b', (uint32_t)batteryLevelContainer);              // Battery voltage 
-            uartCommandSend('p', onPeriodValue);
-            uartCommandSend('s', offPeriodValue);
-            uartCommandSend('r', rebootThresholdValue);
-            uartCommandSend('w', wakeupThresholdValue);
-            uartCommandSend('a', (uint32_t)digitalRead(RASPBERRY_PI_STATUS));   // Send RPi status pin value
-            uartCommandSend('c', resetCause);                                   //TODO test with vid    // Send reset cause
+        // Update status values
+        updateStatusValues();
 
 #ifdef DEBUG
-            raspiSerial.print("Battery level in V = ");
-            raspiSerial.println((int)(batteryVoltage.batteryVoltageGet(batteryLevelContainer)*100));
-            raspiSerial.print("onPeriodValue =");
-            raspiSerial.println(onPeriodValue);
-            raspiSerial.print("offPeriodValue =");
-            raspiSerial.println(offPeriodValue);
-            raspiSerial.print("rebootThresholdValue = ");
-            raspiSerial.println(rebootThresholdValue);
-            raspiSerial.print("wakeupThresholdValue = ");
-            raspiSerial.println(wakeupThresholdValue);
-            raspiSerial.print("turnOnRpiState = ");
-            raspiSerial.println(turnOnRpiState);
-            raspiSerial.print("Status Pin = ");
-            raspiSerial.println(digitalRead(RASPBERRY_PI_STATUS));
-            raspiSerial.print("PiraStatus = ");
-            raspiSerial.println(piraStatus);
+        printStatusValues();
 #endif
-            raspberryPiControl.powerHandler(onPeriodValue,
-                                            offPeriodValue,
-                                            wakeupThresholdValue,
-                                            rebootThresholdValue,
-                                            turnOnRpiState);
-        }
+        raspberryPiControl.powerHandler(onPeriodValue,
+                                        offPeriodValue,
+                                        wakeupThresholdValue,
+                                        rebootThresholdValue,
+                                        turnOnRpiState);
     }
 }

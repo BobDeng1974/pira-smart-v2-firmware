@@ -2,11 +2,12 @@
 
 /**
  * @brief Function parses recived commands depending on starting character  
+ *
  * @param *rxBuffer
- * @param len 
+ *
  * @return none (void) 
  */
-void uartCommandParse(uint8_t *rxBuffer, uint8_t len)
+void uartCommandParse(uint8_t *rxBuffer)
 {
     uint8_t firstChar = rxBuffer[0];
     uint8_t secondChar = rxBuffer[1];
@@ -125,7 +126,7 @@ void uartCommandReceive(void)
                     {
                         //raspiSerial.print("I received: ");
                         //raspiSerial.print(rxBuffer);
-                        uartCommandParse(rxBuffer, RX_BUFFER_SIZE);
+                        uartCommandParse(rxBuffer);
                         rxIndex = 0;
                     }
                     else
@@ -156,6 +157,49 @@ void uartCommandReceive(void)
             }
         }
     }
+}
+
+/**
+ * @brief Sends status values over uart 
+ *
+ * @return none (void) 
+ */
+void updateStatusValues(void)
+{
+    uartCommandSend('t', seconds);
+    uartCommandSend('o', piraStatus);                                   // Seconds left before next power supply turn off
+    uartCommandSend('b', (uint32_t)batteryLevelContainer);              // Battery voltage 
+    uartCommandSend('p', onPeriodValue);
+    uartCommandSend('s', offPeriodValue);
+    uartCommandSend('r', rebootThresholdValue);
+    uartCommandSend('w', wakeupThresholdValue);
+    uartCommandSend('a', (uint32_t)digitalRead(RASPBERRY_PI_STATUS));   // Send RPi status pin value
+    uartCommandSend('c', resetCause);                                   // Send reset cause
+}
+
+/**
+ * @brief Prints status values to uart, used for debugging only
+ *
+ * @return none (void) 
+ */
+void printStatusValues(void)
+{    
+    raspiSerial.print("Battery level in V = ");
+    raspiSerial.println((int)(batteryVoltage.batteryVoltageGet(batteryLevelContainer)*100));
+    raspiSerial.print("onPeriodValue =");
+    raspiSerial.println(onPeriodValue);
+    raspiSerial.print("offPeriodValue =");
+    raspiSerial.println(offPeriodValue);
+    raspiSerial.print("rebootThresholdValue = ");
+    raspiSerial.println(rebootThresholdValue);
+    raspiSerial.print("wakeupThresholdValue = ");
+    raspiSerial.println(wakeupThresholdValue);
+    raspiSerial.print("turnOnRpiState = ");
+    raspiSerial.println(turnOnRpiState);
+    raspiSerial.print("Status Pin = ");
+    raspiSerial.println(digitalRead(RASPBERRY_PI_STATUS));
+    raspiSerial.print("PiraStatus = ");
+    raspiSerial.println(piraStatus);
 }
 
 /**
@@ -335,3 +379,4 @@ char bin2bcd(unsigned int val)
 {
     return ((val / 10) << 4) + val % 10;
 }
+

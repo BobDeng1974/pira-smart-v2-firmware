@@ -10,18 +10,38 @@
 #include "ISL1208_RTC.h"
 
 #include "board.h" 
+#include "BatteryVoltage.h"
 
 //Global variables that are defined in main
+extern uint32_t piraStatus;
 extern uint32_t onPeriodValue;
 extern uint32_t offPeriodValue;
 extern uint32_t rebootThresholdValue;
 extern uint32_t wakeupThresholdValue;
+extern bool turnOnRpiState;
+extern uint32_t resetCause;
 extern ISL1208_RTC rtc; 
-
+extern BatteryVoltage batteryVoltage;
+extern uint16_t batteryLevelContainer;
+extern time_t seconds; 
+/*
+extern uint32_t piraStatus;
+extern uint32_t setTimeValue;
+extern uint32_t onPeriodValue;
+extern uint32_t offPeriodValue;
+extern uint32_t rebootThresholdValue;
+extern uint32_t wakeupThresholdValue;
+extern char getTimeValue[26] = "Tue Apr 10 12:00:00 2018\n";
+extern char *temp;
+extern uint8_t sendTime; 
+extern uint16_t batteryLevelContainer;
+*/
 //Uart related functions
-void uartCommandParse(uint8_t *rxBuffer, uint8_t len);
+void uartCommandParse(uint8_t *rxBuffer);
 void uartCommandSend(char command, uint32_t data);
 void uartCommandReceive(void);
+void updateStatusValues(void);
+void printStatusValues(void);
 
 //RTC related funtions
 void initRtc();

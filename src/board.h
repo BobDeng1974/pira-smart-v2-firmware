@@ -5,7 +5,6 @@
 
 //    #define DEBUG
 //    #define DEBUG_BLE
-//    #define SEND_TIME_AS_STRING
 
 #define bleSerial       Serial
 #define raspiSerial     Serial1 
