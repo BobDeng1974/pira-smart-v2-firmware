@@ -1,5 +1,6 @@
 #include "RaspberryPiControl.h"
 
+#define DEBUG
 
 /**
  * @brief Variables concerning the state of the program
@@ -41,6 +42,10 @@ void stateTransition(state_e next)
 {
   // mark the time state has been entered
   stateTimeoutStart = millis();
+
+  // update prevous state
+  statePrev=state;
+
   // move to the following state
   state = next;
 }
@@ -52,16 +57,46 @@ void stateTransition(state_e next)
  */
 bool stateCheckTimeout(void)
 {
-  // transitionTimeoutcan be disabled
-  if(stateTimeoutDuration == 0){
+    // transitionTimeout can be disabled
+    if(stateTimeoutDuration == 0)
+    {
+        return false;
+    }
+
+    unsigned long elapsed = millis() - stateTimeoutStart;
+
+    //check if we have been in the existing state too long
+    if(elapsed >= stateTimeoutDuration)
+    {
+        //transitionTimeout should be reseted everytime when safey timeout happens, 
+        //to ensure normal operation in next state.
+        transitionTimeout = 0; 
+        return true;
+    }
     return false;
-  }
-  unsigned long elapsed = millis() - stateTimeoutStart;
-  //check if we have been in the existing state too long
-  if(elapsed >= stateTimeoutDuration){
-    return true;
-  }
-  return false;
+}
+
+/**
+ * @brief Returns state string from given state enum 
+ *
+ * @param state
+ *
+ * @return char*
+ */
+char* returnState(state_e state)
+{
+    static char buffer[20];
+
+    if(state == IDLE)
+        sprintf(buffer, "%s", "IDLE");
+    if(state == WAIT_STATUS_ON)
+        sprintf(buffer, "%s", "WAIT_STATUS_ON");
+    if(state == WAKEUP)
+        sprintf(buffer, "%s", "WAKEUP");
+    if(state == REBOOT_DETECTION)
+        sprintf(buffer, "%s", "REBOOT_DETECTION");
+
+    return buffer;
 }
 
 /**
@@ -86,13 +121,14 @@ void raspiStateMachine(uint32_t onThreshold,
 
 #ifdef DEBUG
     raspiSerial.print("fsm(");
-    raspiSerial.print(statePrev);
-    raspiSerial.print(">");
-    raspiSerial.print(state);
-    raspiSerial.print(",");
-    raspiSerial.print(sleep);
+    raspiSerial.print(returnState(statePrev));
+    raspiSerial.print(" -> ");
+    raspiSerial.print(returnState(state));
     raspiSerial.print(",");
     raspiSerial.print(millis());
+    raspiSerial.print(",");
+    raspiSerial.print("Timeout = ");
+    raspiSerial.print(transitionTimeout);
     raspiSerial.println(")");
     raspiSerial.flush();
 #endif
@@ -104,7 +140,9 @@ void raspiStateMachine(uint32_t onThreshold,
             stateGotoTimeout = IDLE;
 
             transitionTimeout++;
-
+            
+            //If we enter this state because saftey timeout was triggered, then power should be disabled.
+            digitalWrite(POWER_ENABLE_5V, LOW);
             //Typical usecase would be that wakeupThreshold < offThreshold
             if ((transitionTimeout >= offThreshold)    || 
                 (transitionTimeout >= wakeupThreshold) || 
@@ -202,9 +240,8 @@ void raspiStateMachine(uint32_t onThreshold,
     if(stateCheckTimeout())
     {
 #ifdef DEBUG
-        raspiSerial.print("timeout(");
-        raspiSerial.print(state);
-        raspiSerial.println(")");
+        raspiSerial.print("timeout in state: ");
+        raspiSerial.println(returnState(state));
 #endif
         stateTransition(stateGotoTimeout);
     }

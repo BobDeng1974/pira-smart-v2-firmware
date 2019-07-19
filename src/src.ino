@@ -90,13 +90,20 @@ void setup(void)
 
     // periodicCallback must be attached after I2C is initialized
     periodicTimer.start(periodicCallback, 0, 1000); //Starts immediately, repeats every 1000 ms
-
     
     //TODO temporary buzzer pulse in case if Pira resets itself
     pinMode(PB7, OUTPUT);
     digitalWrite(PB7, HIGH);
     delay(500);
     digitalWrite(PB7, LOW);
+    delay(500);
+    digitalWrite(PB7, HIGH);
+    delay(500);
+    digitalWrite(PB7, LOW);
+    delay(500);
+
+    raspiSerial.print("Cause for reset = ");
+    raspiSerial.println(resetCause);
 }
 
 void loop()
@@ -123,7 +130,7 @@ void loop()
         batteryLevelContainer = batteryVoltage.batteryLevelGet();
            
         // Update status values
-        updateStatusValues();
+        //updateStatusValues();
 
 #ifdef DEBUG
         printStatusValues();

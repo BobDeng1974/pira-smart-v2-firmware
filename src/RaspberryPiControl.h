@@ -16,6 +16,7 @@ extern uint32_t transitionTimeout;
 
 void stateTransition(state_e next);
 bool stateCheckTimeout(void);
+char* returnState(state_e state);
 
 void raspiStateMachine(uint32_t onThreshold,
                        uint32_t offThreshold,
