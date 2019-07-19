@@ -14,7 +14,6 @@
 #include "mainFunctions.h"
 
 ISL1208_RTC rtc; 
-RaspberryPiControl raspberryPiControl;
 BatteryVoltage batteryVoltage;
 
 const static char DEVICE_NAME[] = "PiraSmart";
@@ -45,8 +44,6 @@ void periodicCallback(void)
     sendTime = 1; 
 }
 
-
-
 void setup(void)
 {
     // TODO port these values to RPi
@@ -69,10 +66,10 @@ void setup(void)
     // Enable watchdog, reset it in periodCallback
     STM32L0.wdtEnable(WATCHDOG_RESET_VALUE_s);
 
-    // Start i2c communication
+    // Start I2C communication
     Wire.begin();
 
-    // UART needs to be initialized first to use it for communication with RPi
+    // Start Uart communication
     raspiSerial.begin(115200);
     while(!raspiSerial){}
 
@@ -87,13 +84,14 @@ void setup(void)
     onPeriodValue = ON_PERIOD_INIT_VALUE_s;
     offPeriodValue = OFF_PERIOD_INIT_VALUE_s;
     wakeupThresholdValue = OFF_PERIOD_INIT_VALUE_s;
-    rebootThresholdValue = raspberryPiControl.REBOOT_TIMEOUT_s;
+    rebootThresholdValue = REBOOT_TIMEOUT_s;
     batteryLevelContainer = 0;
     turnOnRpiState = 0;
 
     // periodicCallback must be attached after I2C is initialized
     periodicTimer.start(periodicCallback, 0, 1000); //Starts immediately, repeats every 1000 ms
 
+    
     //TODO temporary buzzer pulse in case if Pira resets itself
     pinMode(PB7, OUTPUT);
     digitalWrite(PB7, HIGH);
@@ -119,7 +117,7 @@ void loop()
         memcpy(getTimeValue, temp, strlen((const char *)temp));
         
         // Calculate overview value
-        piraStatus = onPeriodValue - raspberryPiControl.timeoutOnGet();
+        piraStatus = onPeriodValue - transitionTimeout;
 
         // Get battery voltage in ADC counts
         batteryLevelContainer = batteryVoltage.batteryLevelGet();
@@ -130,10 +128,10 @@ void loop()
 #ifdef DEBUG
         printStatusValues();
 #endif
-        raspberryPiControl.powerHandler(onPeriodValue,
-                                        offPeriodValue,
-                                        wakeupThresholdValue,
-                                        rebootThresholdValue,
-                                        turnOnRpiState);
+         raspiStateMachine(onPeriodValue,
+                           offPeriodValue,
+                           wakeupThresholdValue,
+                           rebootThresholdValue,
+                           turnOnRpiState);
     }
 }

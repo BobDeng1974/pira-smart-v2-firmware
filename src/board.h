@@ -14,7 +14,7 @@
 #define OFF_PERIOD_INIT_VALUE_s     (7200)
 #define RX_BUFFER_SIZE              (7)             // Size in B, do not change, comunication protocol between Pira and RPi depends on this
 #define WATCHDOG_RESET_VALUE_s      (15000)
-
+#define REBOOT_TIMEOUT_s            (60)
 
 // Pin defines 
 #define POWER_ENABLE_5V     (PB6) 

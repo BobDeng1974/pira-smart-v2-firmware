@@ -3,47 +3,24 @@
 
 #include <stdint.h>
 #include "board.h" 
+#include "Arduino.h"
 
-//#define DEBUG
-class RaspberryPiControl 
+enum state_e 
 {
-public:
-
-    const static uint32_t REBOOT_TIMEOUT_s = 60;    //1 minute
-
-    enum ControlState
-    {
-        IDLE_STATE             = 0,
-        WAIT_STATUS_ON_STATE   = 1,
-        WAKEUP_STATE           = 2,
-        REBOOT_DETECTION       = 3,
-    };
-    
-    RaspberryPiControl(void);
-
-    void powerHandler(void);
-
-    void powerHandler(uint32_t onThreshold,
-                      uint32_t offThreshold,
-                      uint32_t wakeupThreshold,
-                      uint32_t rebootThreshold,
-                      bool forceOffPeriodEnd);
-
-    uint32_t timeoutOnGet(void)
-    {
-        return timeoutOn;
-    }
-
-    uint32_t timeoutOffGet(void)
-    {
-        return timeoutOff;
-    }
-
-private:
-    uint8_t  state;
-    uint32_t timeoutOn;
-    uint32_t timeoutOff;
-    uint32_t timeoutReboot;
+    IDLE,
+    WAIT_STATUS_ON,
+    WAKEUP,
+    REBOOT_DETECTION
 };
+extern uint32_t transitionTimeout;
+
+void stateTransition(state_e next);
+bool stateCheckTimeout(void);
+
+void raspiStateMachine(uint32_t onThreshold,
+                       uint32_t offThreshold,
+                       uint32_t wakeupThreshold,
+                       uint32_t rebootThreshold,
+                       bool forceOffPeriodEnd);
 
 #endif /* RASPBERRY_PI_CONTROL_H */
