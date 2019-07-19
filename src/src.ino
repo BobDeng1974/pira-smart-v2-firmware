@@ -130,7 +130,7 @@ void loop()
         batteryLevelContainer = batteryVoltage.batteryLevelGet();
            
         // Update status values
-        //updateStatusValues();
+        updateStatusValues();
 
 #ifdef DEBUG
         printStatusValues();

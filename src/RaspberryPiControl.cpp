@@ -1,6 +1,6 @@
 #include "RaspberryPiControl.h"
 
-#define DEBUG
+//#define DEBUG
 
 /**
  * @brief Variables concerning the state of the program
@@ -159,7 +159,7 @@ void raspiStateMachine(uint32_t onThreshold,
             break;
 
         case WAIT_STATUS_ON:
-            stateTimeoutDuration = 10000;
+            stateTimeoutDuration = 0;
             stateGotoTimeout = IDLE;
 
             //Wait untill RaspberryPi pulls up STATUS pin or untill timeoutWAKEOUT reaches onThreshold value
@@ -182,7 +182,7 @@ void raspiStateMachine(uint32_t onThreshold,
             break;
 
         case WAKEUP:
-            stateTimeoutDuration = 10000;
+            stateTimeoutDuration = 0;
             stateGotoTimeout = IDLE;
 
             transitionTimeout++;
@@ -210,7 +210,7 @@ void raspiStateMachine(uint32_t onThreshold,
             break;
 
         case REBOOT_DETECTION:
-            stateTimeoutDuration = 10000;
+            stateTimeoutDuration = 0;
             stateGotoTimeout = IDLE;
 
             //Wait for reboot timeout
