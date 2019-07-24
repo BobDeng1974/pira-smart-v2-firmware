@@ -1,0 +1,16 @@
+{
+  "values": [
+    {
+      "pira_on_time": 11, 
+      "pira_off_time": 20, 
+      "pira_reboot_time": 30, 
+      "pira_wakeup_time": 40
+    }, 
+    {
+      "pira_on_time": 50, 
+      "pira_off_time": 60, 
+      "pira_reboot_time": 70, 
+      "pira_wakeup_time": 80
+    } 
+  ]
+}

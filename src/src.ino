@@ -31,6 +31,8 @@ bool turnOnRpiState;
 uint32_t resetCause;
 time_t seconds; 
 
+extern uint32_t transitionTimeout;
+
 // Timer needed for interrupt
 TimerMillis periodicTimer;
 
@@ -102,8 +104,12 @@ void setup(void)
     digitalWrite(PB7, LOW);
     delay(500);
 
+
+#ifdef DEBUG
     raspiSerial.print("Cause for reset = ");
     raspiSerial.println(resetCause);
+#endif
+    uartCommandSend('j', resetCause);                                   // Send reset cause
 }
 
 void loop()

@@ -12,16 +12,13 @@
  *      stateGotoTimeout
  *          It is set everytime when we enter state
  */
-state_e state = WAIT_STATUS_ON;
+state_e state = WAIT_STATUS_ON;     
 state_e statePrev = WAIT_STATUS_ON;
 state_e stateGotoTimeout;
 
 /**
  * @brief Variables concerning the state of the program
  * @detail
- *      transitionTimeout
- *          counter variable that is depended on one second execution of raspStateMachine function.
- *          In certain states it is used to trigger a transition between states if it reaches certain value.
  *      eventLoopStart 
  *          Keeps the time when loop started. 
  *      stateTimeoutDuration

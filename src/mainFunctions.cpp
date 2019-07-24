@@ -174,7 +174,7 @@ void updateStatusValues(void)
     uartCommandSend('r', rebootThresholdValue);
     uartCommandSend('w', wakeupThresholdValue);
     uartCommandSend('a', (uint32_t)digitalRead(RASPBERRY_PI_STATUS));   // Send RPi status pin value
-    uartCommandSend('c', resetCause);                                   // Send reset cause
+    uartCommandSend('c', state);                                   // Send reset cause
 }
 
 /**

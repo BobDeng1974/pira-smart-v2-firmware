@@ -12,7 +12,6 @@ enum state_e
     WAKEUP,
     REBOOT_DETECTION
 };
-extern uint32_t transitionTimeout;
 
 void stateTransition(state_e next);
 bool stateCheckTimeout(void);

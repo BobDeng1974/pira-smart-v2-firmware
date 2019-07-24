@@ -2,3 +2,4 @@
 .temp
 *.dfu
 .vscode
+*.pyc
