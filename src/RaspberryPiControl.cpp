@@ -1,6 +1,6 @@
 #include "RaspberryPiControl.h"
 
-#define DEBUG
+//#define DEBUG
 
 /**
  * @brief Variables concerning the state of the program
