@@ -3,17 +3,17 @@
 #include <time.h>
 
 #include "Wire.h"
-#include "STM32L0.h"            
+#include "STM32L0.h"
 #include "TimerMillis.h"
 #include "ISL1208_RTC.h"
 #include "RN487x_BLE.h"
 
-#include "board.h" 
+#include "board.h"
 #include "RaspberryPiControl.h"
 #include "BatteryVoltage.h"
 #include "mainFunctions.h"
 
-ISL1208_RTC rtc; 
+ISL1208_RTC rtc;
 BatteryVoltage batteryVoltage;
 
 const static char DEVICE_NAME[] = "PiraSmart";
@@ -25,13 +25,13 @@ uint32_t rebootThresholdValue;
 uint32_t wakeupThresholdValue;
 char getTimeValue[26] = "Tue Apr 10 12:00:00 2018\n";
 char *temp;
-uint8_t sendTime; 
+uint8_t sendTime;
 uint16_t batteryLevelContainer;
-bool turnOnRpiState;
+bool turnOnRpi; //TODO actually implement this functionality, it is missing the command from outside
 uint32_t resetCause;
-time_t seconds; 
+time_t seconds;
 
-extern uint32_t transitionTimeout;
+extern state_e state;
 
 // Timer needed for interrupt
 TimerMillis periodicTimer;
@@ -39,11 +39,11 @@ TimerMillis periodicTimer;
 // Watchdog is reseted here, sendTime flag is set here
 void periodicCallback(void)
 {
-    // HW WatchDog reset    
+    // HW WatchDog reset
     STM32L0.wdtReset();
 
-    // Set flag to update status every second    
-    sendTime = 1; 
+    // Set flag to update status every second
+    sendTime = 1;
 }
 
 void setup(void)
@@ -60,11 +60,11 @@ void setup(void)
 
     // Initially enable RaspberryPi power
     pinMode(POWER_ENABLE_5V, OUTPUT);
-    digitalWrite(POWER_ENABLE_5V, HIGH); 
+    digitalWrite(POWER_ENABLE_5V, HIGH);
 
     // Prepare status pin
     pinMode(RASPBERRY_PI_STATUS, INPUT_PULLDOWN);
-    
+
     // Enable watchdog, reset it in periodCallback
     STM32L0.wdtEnable(WATCHDOG_RESET_VALUE_s);
 
@@ -81,18 +81,18 @@ void setup(void)
     //Set ON and OFF period values to 30min by default
     // Initialize variables
     sendTime = 0;
-    setTimeValue = TIME_INIT_VALUE; 
+    setTimeValue = TIME_INIT_VALUE;
     piraStatus = 0;
     onPeriodValue = ON_PERIOD_INIT_VALUE_s;
     offPeriodValue = OFF_PERIOD_INIT_VALUE_s;
     wakeupThresholdValue = OFF_PERIOD_INIT_VALUE_s;
     rebootThresholdValue = REBOOT_TIMEOUT_s;
     batteryLevelContainer = 0;
-    turnOnRpiState = 0;
+    turnOnRpi = 0;
 
     // periodicCallback must be attached after I2C is initialized
     periodicTimer.start(periodicCallback, 0, 1000); //Starts immediately, repeats every 1000 ms
-    
+
     //TODO temporary buzzer pulse in case if Pira resets itself
     pinMode(PB7, OUTPUT);
     digitalWrite(PB7, HIGH);
@@ -113,30 +113,28 @@ void setup(void)
 }
 
 void loop()
-{    
+{
     uartCommandReceive();
     if (sendTime)   // Statement will be executed every second
     {
         sendTime = 0; // Reset flag
 
-        // Get the current time from RTC 
+        // Get the current seconds from RTC
         seconds = time();
 #ifdef DEBUG
         raspiSerial.print("Time as a basic string = ");
         raspiSerial.println(ctime(&seconds));
 #endif
-        // Write current time to containter variable which can be read over BLE
+        // Write current seconds to containter variable which can be read over BLE
         temp = ctime(&seconds);
         memcpy(getTimeValue, temp, strlen((const char *)temp));
-        
-        // Calculate overview value
-        piraStatus = onPeriodValue - transitionTimeout;
 
         // Get battery voltage in ADC counts
         batteryLevelContainer = batteryVoltage.batteryLevelGet();
-           
-        // Update status values
-        updateStatusValues();
+
+        // Update status values in not in IDLE state
+        if(!(state == IDLE))
+            updateStatusValues();
 
 #ifdef DEBUG
         printStatusValues();
@@ -145,6 +143,6 @@ void loop()
                            offPeriodValue,
                            wakeupThresholdValue,
                            rebootThresholdValue,
-                           turnOnRpiState);
+                           turnOnRpi);
     }
 }

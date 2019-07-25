@@ -19,7 +19,7 @@ extern uint32_t onPeriodValue;
 extern uint32_t offPeriodValue;
 extern uint32_t rebootThresholdValue;
 extern uint32_t wakeupThresholdValue;
-extern bool turnOnRpiState;
+extern bool turnOnRpi;
 extern uint32_t resetCause;
 extern ISL1208_RTC rtc; 
 extern BatteryVoltage batteryVoltage;
@@ -27,7 +27,7 @@ extern uint16_t batteryLevelContainer;
 extern time_t seconds; 
 
 //Variable that is defined in RaspberryPiControl.h
-extern state_e state;
+extern uint32_t elapsed;  
 
 //Uart related functions
 void uartCommandParse(uint8_t *rxBuffer);
@@ -35,6 +35,7 @@ void uartCommandSend(char command, uint32_t data);
 void uartCommandReceive(void);
 void updateStatusValues(void);
 void printStatusValues(void);
+uint32_t getOverviewValue(void);
 
 //RTC related funtions
 void initRtc();

@@ -1,11 +1,13 @@
 #include "mainFunctions.h"
 
+extern state_e state;
+
 /**
- * @brief Function parses recived commands depending on starting character  
+ * @brief Function parses recived commands depending on starting character
  *
  * @param *rxBuffer
  *
- * @return none (void) 
+ * @return none (void)
  */
 void uartCommandParse(uint8_t *rxBuffer)
 {
@@ -47,18 +49,18 @@ void uartCommandParse(uint8_t *rxBuffer)
                 break;
         }
     }
-    else 
-        // TODO This serial will go back to RPI, should you send something else? 
+    else
+        // TODO This serial will go back to RPI, should you send something else?
         raspiSerial.print("Incorrect format, this shouldn't happen!");
 }
 
 /**
- * @brief Encodes and sends data over uart 
+ * @brief Encodes and sends data over uart
  *
  * @param command
- * @param data 
+ * @param data
  *
- * @return none (void) 
+ * @return none (void)
  */
 void uartCommandSend(char command, uint32_t data)
 {
@@ -72,22 +74,22 @@ void uartCommandSend(char command, uint32_t data)
 }
 
 /**
- * @brief Receives uart data  
+ * @brief Receives uart data
  *
- * @detail Data should be of exact specified format, 
+ * @detail Data should be of exact specified format,
  *         otherwise all received data is going to be rejected
  *
- * @return none (void) 
+ * @return none (void)
  */
 void uartCommandReceive(void)
 {
-    uint8_t rxBuffer[RX_BUFFER_SIZE] = "";     
+    uint8_t rxBuffer[RX_BUFFER_SIZE] = "";
     uint8_t rxIndex = 0;
     if (raspiSerial.available() != 0)
     {
         delay(10); // Without delay code thinks that it gets only first character first
                    // and then the rest of the string, final result is that they are received seperatly.
-                   // A short delay prevents that. 
+                   // A short delay prevents that.
         while (raspiSerial.available() > 0)
         {
             rxBuffer[rxIndex] = raspiSerial.read();
@@ -137,11 +139,11 @@ void uartCommandReceive(void)
                             rxBuffer[i] = 0;
                         }
                         rxIndex = 0;
-                    } 
+                    }
                 }
                 else if (rxIndex == (RX_BUFFER_SIZE - 1))
                 {
-                    // We reached max lenght, but no newline, empty buffer  
+                    // We reached max lenght, but no newline, empty buffer
                     for (int i = 0; i < RX_BUFFER_SIZE; i++)
                     {
                         rxBuffer[i] = 0;
@@ -160,30 +162,31 @@ void uartCommandReceive(void)
 }
 
 /**
- * @brief Sends status values over uart 
+ * @brief Sends status values over uart
  *
- * @return none (void) 
+ * @return none (void)
  */
 void updateStatusValues(void)
 {
+
     uartCommandSend('t', seconds);
-    uartCommandSend('o', piraStatus);                                   // Seconds left before next power supply turn off
-    uartCommandSend('b', (uint32_t)batteryLevelContainer);              // Battery voltage 
+    uartCommandSend('o', getOverviewValue());
+    uartCommandSend('b', (uint32_t)batteryLevelContainer);
     uartCommandSend('p', onPeriodValue);
     uartCommandSend('s', offPeriodValue);
     uartCommandSend('r', rebootThresholdValue);
     uartCommandSend('w', wakeupThresholdValue);
-    uartCommandSend('a', (uint32_t)digitalRead(RASPBERRY_PI_STATUS));   // Send RPi status pin value
-    uartCommandSend('c', state);                                   // Send reset cause
+    uartCommandSend('a', (uint32_t)digitalRead(RASPBERRY_PI_STATUS));
+    uartCommandSend('c', state);
 }
 
 /**
  * @brief Prints status values to uart, used for debugging only
  *
- * @return none (void) 
+ * @return none (void)
  */
 void printStatusValues(void)
-{    
+{
     raspiSerial.print("Battery level in V = ");
     raspiSerial.println((int)(batteryVoltage.batteryVoltageGet(batteryLevelContainer)*100));
     raspiSerial.print("onPeriodValue =");
@@ -195,17 +198,33 @@ void printStatusValues(void)
     raspiSerial.print("wakeupThresholdValue = ");
     raspiSerial.println(wakeupThresholdValue);
     raspiSerial.print("turnOnRpiState = ");
-    raspiSerial.println(turnOnRpiState);
+    raspiSerial.println(turnOnRpi);
     raspiSerial.print("Status Pin = ");
     raspiSerial.println(digitalRead(RASPBERRY_PI_STATUS));
-    raspiSerial.print("PiraStatus = ");
-    raspiSerial.println(piraStatus);
+    raspiSerial.print("Overview = ");
+    raspiSerial.println(getOverviewValue());
 }
 
 /**
- * @brief Intializes rtc and sets init time value  
+ * @brief Gets overview value, it depends in which state is currently pira
  *
- * @return none (void) 
+ * @return uint32
+ */
+uint32_t getOverviewValue(void)
+{
+    // Calculate overview value
+    if(state == WAIT_STATUS_ON || state == WAKEUP)
+        return onPeriodValue - elapsed;
+    else if(state == REBOOT_DETECTION)
+        return rebootThresholdValue - elapsed;
+
+    return 0;
+}
+
+/**
+ * @brief Intializes rtc and sets init time value
+ *
+ * @return none (void)
  */
 void initRtc()
 {
@@ -225,7 +244,7 @@ void initRtc()
 #ifdef DEBUG
             //The time has been lost due to a power complete power failure
             raspiSerial.println("RTC has lost power! Resetting time...");
-#endif 
+#endif
             //Set RTC time to Mon, 1 Jan 2018 00:00:00
             time(TIME_INIT_VALUE);
         }
@@ -249,30 +268,30 @@ time_t time()
     struct tm timeinfo;
     timeinfo.tm_sec = bcd2bin(read8(ISL1208_ADDRESS, ISL1208_SC));
     timeinfo.tm_min = bcd2bin(read8(ISL1208_ADDRESS, ISL1208_MN));
- 
+
     //Make sure we get the proper hour regardless of the mode
     char hours = read8(ISL1208_ADDRESS, ISL1208_HR);
-    if (hours & (1 << 7)) 
+    if (hours & (1 << 7))
     {
         //RTC is in 24-hour mode
         timeinfo.tm_hour = bcd2bin(hours & 0x3F);
-    } 
-    else 
+    }
+    else
     {
         //RTC is in 12-hour mode
         timeinfo.tm_hour = bcd2bin(hours & 0x1F);
- 
+
         //Check for the PM flag
         if (hours & (1 << 5))
             timeinfo.tm_hour += 12;
     }
- 
+
     //Continue reading the registers
     timeinfo.tm_mday = bcd2bin(read8(ISL1208_ADDRESS, ISL1208_DT));
     timeinfo.tm_mon  = bcd2bin(read8(ISL1208_ADDRESS, ISL1208_MO)) - 1;
     timeinfo.tm_year = bcd2bin(read8(ISL1208_ADDRESS, ISL1208_YR)) + 100;
     timeinfo.tm_wday = bcd2bin(read8(ISL1208_ADDRESS, ISL1208_DW));
- 
+
     //Return as a timestamp
     return mktime(&timeinfo);
 }
@@ -286,20 +305,20 @@ void time(time_t t)
 {
     //Convert the time to a tm
     struct tm *timeinfo = localtime(&t);
- 
+
     /* The clock has an 8 bit wide bcd-coded register (they never learn)
      * for the year. tm_year is an offset from 1900 and we are interested
      * in the 2000-2099 range, so any value less than 100 is invalid.
      */
     if (timeinfo->tm_year < 100)
         return;
- 
+
     //Read the old SR register value
     char sr = read8(ISL1208_ADDRESS, ISL1208_SR);
- 
+
     //Enable RTC writing
     write8(ISL1208_ADDRESS, ISL1208_SR, sr | (1 << 4));
- 
+
     //Write the current time
     write8(ISL1208_ADDRESS, ISL1208_SC, bin2bcd(timeinfo->tm_sec));
     write8(ISL1208_ADDRESS, ISL1208_MN, bin2bcd(timeinfo->tm_min));
@@ -308,7 +327,7 @@ void time(time_t t)
     write8(ISL1208_ADDRESS, ISL1208_MO, bin2bcd(timeinfo->tm_mon + 1));
     write8(ISL1208_ADDRESS, ISL1208_YR, bin2bcd(timeinfo->tm_year - 100));
     write8(ISL1208_ADDRESS, ISL1208_DW, bin2bcd(timeinfo->tm_wday & 7));
- 
+
     //Disable RTC writing
     write8(ISL1208_ADDRESS, ISL1208_SR, sr);
 }
@@ -319,7 +338,7 @@ void time(time_t t)
  * @param addr
  * @param reg
  *
- * @return char 
+ * @return char
  */
 char read8(char addr, char reg)
 {
@@ -330,7 +349,7 @@ char read8(char addr, char reg)
 
     //Read the 8-bit register
     Wire.requestFrom(addr, 1); // now get the bytes of data...
- 
+
     //Return the byte
     return Wire.read();
 }
@@ -350,14 +369,14 @@ void write8(char addr, char reg, char data)
     //Select the register
     Wire.beginTransmission(addr); //send I2C address of RTC
     Wire.write(reg); //status register
-    
+
     //Write to register
-    Wire.write(data); 
+    Wire.write(data);
     Wire.endTransmission();
 }
 
 /**
- * @brief Converts binary coded decimal to binary 
+ * @brief Converts binary coded decimal to binary
  *
  * @param val
  *
@@ -367,13 +386,13 @@ unsigned int bcd2bin(unsigned char val)
 {
     return (val & 0x0F) + (val >> 4) * 10;
 }
- 
+
 /**
- * @brief Converts binary to binary coded decimal  
+ * @brief Converts binary to binary coded decimal
  *
  * @param val
  *
- * @return char 
+ * @return char
  */
 char bin2bcd(unsigned int val)
 {
