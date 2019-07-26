@@ -17,21 +17,21 @@ ISL1208_RTC rtc;
 BatteryVoltage batteryVoltage;
 
 const static char DEVICE_NAME[] = "PiraSmart";
-uint32_t piraStatus;
+uint32_t status_active_pin;
 uint32_t setTimeValue;
-uint32_t onPeriodValue;
-uint32_t offPeriodValue;
-uint32_t rebootThresholdValue;
-uint32_t wakeupThresholdValue;
+uint32_t safety_power_period;
+uint32_t safety_sleep_period;
+uint32_t safety_reboot;
+uint32_t operational_wakeup;
 char getTimeValue[26] = "Tue Apr 10 12:00:00 2018\n";
 char *temp;
 uint8_t sendTime;
-uint16_t batteryLevelContainer;
+uint16_t status_battery;
 bool turnOnRpi; //TODO actually implement this functionality, it is missing the command from outside
-uint32_t resetCause;
-time_t seconds;
+uint32_t status_error_reset;
+time_t status_time;
 
-extern state_e state;
+extern state_e status_state_machine;
 
 // Timer needed for interrupt
 TimerMillis periodicTimer;
@@ -56,7 +56,7 @@ void setup(void)
     //#define STM32L0_SYSTEM_RESET_FIREWALL          4
     //#define STM32L0_SYSTEM_RESET_OTHER             5
     //#define STM32L0_SYSTEM_RESET_STANDBY           6
-    resetCause = STM32L0.resetCause();
+    status_error_reset = STM32L0.resetCause();
 
     // Initially enable RaspberryPi power
     pinMode(POWER_ENABLE_5V, OUTPUT);
@@ -82,12 +82,12 @@ void setup(void)
     // Initialize variables
     sendTime = 0;
     setTimeValue = TIME_INIT_VALUE;
-    piraStatus = 0;
-    onPeriodValue = ON_PERIOD_INIT_VALUE_s;
-    offPeriodValue = OFF_PERIOD_INIT_VALUE_s;
-    wakeupThresholdValue = OFF_PERIOD_INIT_VALUE_s;
-    rebootThresholdValue = REBOOT_TIMEOUT_s;
-    batteryLevelContainer = 0;
+    status_active_pin = 0;
+    safety_power_period = ON_PERIOD_INIT_VALUE_s;
+    safety_sleep_period = OFF_PERIOD_INIT_VALUE_s;
+    operational_wakeup = OFF_PERIOD_INIT_VALUE_s;
+    safety_reboot = REBOOT_TIMEOUT_s;
+    status_battery = 0;
     turnOnRpi = 0;
 
     // periodicCallback must be attached after I2C is initialized
@@ -107,9 +107,9 @@ void setup(void)
 
 #ifdef DEBUG
     raspiSerial.print("Cause for reset = ");
-    raspiSerial.println(resetCause);
+    raspiSerial.println(status_error_reset);
 #endif
-    uartCommandSend('j', resetCause);                                   // Send reset cause
+    uartCommandSend('e', status_error_reset);                                   // Send reset cause
 }
 
 void loop()
@@ -119,30 +119,30 @@ void loop()
     {
         sendTime = 0; // Reset flag
 
-        // Get the current seconds from RTC
-        seconds = time();
+        // Get the current time from RTC
+        status_time = time();
 #ifdef DEBUG
         raspiSerial.print("Time as a basic string = ");
-        raspiSerial.println(ctime(&seconds));
+        raspiSerial.println(ctime(&status_time));
 #endif
-        // Write current seconds to containter variable which can be read over BLE
-        temp = ctime(&seconds);
+        // Write current time to containter variable which can be read over BLE
+        temp = ctime(&status_time);
         memcpy(getTimeValue, temp, strlen((const char *)temp));
 
         // Get battery voltage in ADC counts
-        batteryLevelContainer = batteryVoltage.batteryLevelGet();
+        status_battery = batteryVoltage.batteryLevelGet();
 
         // Update status values in not in IDLE state
-        if(!(state == IDLE))
+        if(!(status_state_machine == IDLE))
             updateStatusValues();
 
 #ifdef DEBUG
         printStatusValues();
 #endif
-         raspiStateMachine(onPeriodValue,
-                           offPeriodValue,
-                           wakeupThresholdValue,
-                           rebootThresholdValue,
+         raspiStateMachine(safety_power_period,
+                           safety_sleep_period,
+                           operational_wakeup,
+                           safety_reboot,
                            turnOnRpi);
     }
 }

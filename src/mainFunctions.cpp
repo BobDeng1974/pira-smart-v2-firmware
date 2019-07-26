@@ -1,6 +1,6 @@
 #include "mainFunctions.h"
 
-extern state_e state;
+extern state_e status_state_machine;
 
 /**
  * @brief Function parses recived commands depending on starting character
@@ -27,11 +27,11 @@ void uartCommandParse(uint8_t *rxBuffer)
                 break;
             case 'p':
                 //raspiSerial.println("p: received");
-                onPeriodValue = data;
+                safety_power_period = data;
                 break;
             case 's':
                 //raspiSerial.println("s: received");
-                offPeriodValue = data;
+                safety_sleep_period = data;
                 break;
             case 'c':
                 //raspiSerial.println("c: received");
@@ -39,11 +39,11 @@ void uartCommandParse(uint8_t *rxBuffer)
                 break;
             case 'r':
                 //raspiSerial.println("r: received");
-                rebootThresholdValue = data;
+                safety_reboot = data;
                 break;
             case 'w':
                 //raspiSerial.println("w: received");
-                wakeupThresholdValue = data;
+                operational_wakeup = data;
                 break;
             default:
                 break;
@@ -168,16 +168,15 @@ void uartCommandReceive(void)
  */
 void updateStatusValues(void)
 {
-
-    uartCommandSend('t', seconds);
+    uartCommandSend('t', status_time);
     uartCommandSend('o', getOverviewValue());
-    uartCommandSend('b', (uint32_t)batteryLevelContainer);
-    uartCommandSend('p', onPeriodValue);
-    uartCommandSend('s', offPeriodValue);
-    uartCommandSend('r', rebootThresholdValue);
-    uartCommandSend('w', wakeupThresholdValue);
+    uartCommandSend('b', (uint32_t)status_battery);
+    uartCommandSend('p', safety_power_period);
+    uartCommandSend('s', safety_sleep_period);
+    uartCommandSend('r', safety_reboot);
+    uartCommandSend('w', operational_wakeup);
     uartCommandSend('a', (uint32_t)digitalRead(RASPBERRY_PI_STATUS));
-    uartCommandSend('c', state);
+    uartCommandSend('m', status_state_machine);
 }
 
 /**
@@ -188,15 +187,15 @@ void updateStatusValues(void)
 void printStatusValues(void)
 {
     raspiSerial.print("Battery level in V = ");
-    raspiSerial.println((int)(batteryVoltage.batteryVoltageGet(batteryLevelContainer)*100));
-    raspiSerial.print("onPeriodValue =");
-    raspiSerial.println(onPeriodValue);
-    raspiSerial.print("offPeriodValue =");
-    raspiSerial.println(offPeriodValue);
-    raspiSerial.print("rebootThresholdValue = ");
-    raspiSerial.println(rebootThresholdValue);
-    raspiSerial.print("wakeupThresholdValue = ");
-    raspiSerial.println(wakeupThresholdValue);
+    raspiSerial.println((int)(batteryVoltage.batteryVoltageGet(status_battery)*100));
+    raspiSerial.print("safety_power_period =");
+    raspiSerial.println(safety_power_period);
+    raspiSerial.print("safety_sleep_period =");
+    raspiSerial.println(safety_sleep_period);
+    raspiSerial.print("safety_reboot = ");
+    raspiSerial.println(safety_reboot);
+    raspiSerial.print("operational_wakeup = ");
+    raspiSerial.println(operational_wakeup);
     raspiSerial.print("turnOnRpiState = ");
     raspiSerial.println(turnOnRpi);
     raspiSerial.print("Status Pin = ");
@@ -213,10 +212,10 @@ void printStatusValues(void)
 uint32_t getOverviewValue(void)
 {
     // Calculate overview value
-    if(state == WAIT_STATUS_ON || state == WAKEUP)
-        return onPeriodValue - elapsed;
-    else if(state == REBOOT_DETECTION)
-        return rebootThresholdValue - elapsed;
+    if(status_state_machine == WAIT_STATUS_ON || status_state_machine == WAKEUP)
+        return safety_power_period - elapsed;
+    else if(status_state_machine == REBOOT_DETECTION)
+        return safety_reboot - elapsed;
 
     return 0;
 }

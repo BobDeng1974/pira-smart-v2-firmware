@@ -1,6 +1,6 @@
 import logging
 import datetime
-from time import sleep 
+from time import sleep
 
 import RPi.GPIO as gpio
 import devices
@@ -15,9 +15,9 @@ class Boot():
         print("Initializing GPIO...")
         # Set numbering mode 
         gpio.setmode(gpio.BCM)
-        gpio.setwarnings(False) 
+        gpio.setwarnings(False)
         # Set STATUS PIN
-        gpio.setup(devices.GPIO_PIRA_STATUS_PIN, gpio.OUT, initial=gpio.HIGH)
+        gpio.setup(devices.GPIO_PIRA_STATUS_PIN, gpio.OUT, initial=gpio.LOW)
 
         # Set POWER PIN
         gpio.setup(devices.GPIO_POWER_SUPPLY_PIN, gpio.IN, pull_up_down=gpio.PUD_DOWN)
@@ -31,14 +31,15 @@ class Boot():
         """Initialize logging."""
         print("Initializing LOGGING, logs will be saved into logging.log file")
 
-        logging.basicConfig(filename='logging.log', format='%(asctime)s-%(levelname)s-%(message)s', level=logging.DEBUG)
+        logging.basicConfig(filename='logging.log', format='%(asctime)s-%(levelname)s|%(message)s', level=logging.DEBUG)
         logging.info('---------------------------------------------')
-        logging.info('--------------Logging started!---------------')
+        logging.info('-------------Logging initialized!------------')
         logging.info('---------------------------------------------')
-        
+
     def setup_debug(self):
         """Initialize debug output"""
-        self.debug = debug.Debug()
+        print("Initializing DEBUG...")
+        self.debug = debug.Debug(self)
 
     def setup_time(self):
         """Syncs time between raspberry and pira"""
@@ -75,7 +76,6 @@ class Boot():
         self.setup_logging()
         self.setup_debug()
         self.setup_time()
-    
 
 
     def get_voltage(self):  # b variable
@@ -98,10 +98,10 @@ class Boot():
         timer_pira = self.pirasmart.pira_on_timer_get
         return timer_pira
 
-    def get_pira_on_timer_set(self):    # o variable
+    def get_pira_overview(self):    # o variable
         """Get pira overwiev - status value """
-        timer_pira = self.pirasmart.pira_on_timer_set
-        return timer_pira
+        overview = self.pirasmart.pira_overview
+        return overview
 
     def get_pira_sleep_timer(self): # s variable
         """Get pira sleep timer"""
@@ -122,3 +122,8 @@ class Boot():
         """Get pira command"""
         command = self.pirasmart.pira_command
         return command
+
+    def get_pira_state(self):    # c variable
+        """Get pira command"""
+        state = self.pirasmart.pira_state
+        return state

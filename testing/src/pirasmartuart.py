@@ -45,7 +45,7 @@ class PIRASMARTUART(object):
         start = time.time()
         #reset values
         self.pira_time = None # t
-        self.pira_on_timer_set = None # o
+        self.pira_overview = None # o
         self.pira_voltage = None # b
         self.pira_on_timer_get = None # p
         self.pira_sleep = None # s
@@ -53,7 +53,8 @@ class PIRASMARTUART(object):
         self.pira_next_wakeup_get = None # w
         self.pira_rpi_gpio = None # a
         self.pira_command = None # c
-        self.pira_reset_cause = None # j
+        self.pira_reset_cause = None # e
+        self.pira_state = None # m
 
         read_timeout = 0    # handles when pira ble is not connected
         value = 0.0         # float that pira ble will use
@@ -64,21 +65,20 @@ class PIRASMARTUART(object):
             print("WARNING: Pira input buffer flush failed.")
 
         while (self.pira_time == None) or \
-                (self.pira_on_timer_set == None) or \
+                (self.pira_overview == None) or \
                 (self.pira_voltage == None) or \
                 (self.pira_on_timer_get == None) or \
                 (self.pira_sleep == None) or \
                 (self.pira_reboot == None) or \
                 (self.pira_next_wakeup_get == None) or \
-                (self.pira_command  == None) or \
+                (self.pira_state == None) or \
                 (self.pira_rpi_gpio == None) and not \
                 (time.time() - start < timeout):
-        
 
             try:
                 x = ""
                 x = self.ser.readline()
-                #print "Preamble: " + x[0:2] + "Data: " + x[2:-1].encode('hex') + " Line: " + str(x.startswith(preamble))
+                #print("Preamble: " + x[0:2] + "Data: " + x[2:-1].encode('hex') + " Line: " + str(x.startswith(preamble)))
                 #' '.join(map(lambda x:x.encode('hex'),x))
                 #struct.unpack('<h', unhexlify(s1))[0]
                 value = float(struct.unpack('>L', x[2:6])[0])
@@ -91,10 +91,10 @@ class PIRASMARTUART(object):
 
             if x.startswith(str('t:')):
                 self.pira_time = float(value)
-                #print "Pira time: " + str(self.pira_time)
+                #print ("Pira time: " + str(self.pira_time))
             elif x.startswith(str('o:')):
-                self.pira_on_timer_set = float(value)
-                #print "Pira overwiev: " + str(self.pira_on_timer_set)
+                self.pira_overview = float(value)
+                #print ("Pira overview: " + str(self.pira_overview))
             elif x.startswith(str('b:')):
                 self.pira_voltage = float(value)*0.0164     # value for pirasmart v1
                 #self.pira_voltage = float(value)*0.0020698 # value for pirasmart v2 
@@ -113,13 +113,16 @@ class PIRASMARTUART(object):
                 #print "Pira next wakeup get : " + str(self.pira_next_wakeup_get)
             elif x.startswith(str('a:')):
                 self.pira_rpi_gpio = float(value)
-                print("Pira reports Pi status pin value: " + str(self.pira_rpi_gpio))
+                #print("Pira reports Pi status pin value: " + str(self.pira_rpi_gpio))
             elif x.startswith(str('c:')):
                 self.pira_command  = int(value)
                 #print "Pira command : " + str(self.pira_command)
-            elif x.startswith(str('j:')):
+            elif x.startswith(str('e:')):
                 self.pira_reset_cause  = int(value)
-                print("Pira reset cause : " +  self.translate_reset_cause(self.pira_reset_cause))
+                #print("Pira reset cause : " +  self.translate_reset_cause(self.pira_reset_cause))
+            elif x.startswith(str('m:')):
+                self.pira_state  = int(value)
+                #print("Pira state : " + str(self.pira_state))
 
         return True
 
@@ -169,16 +172,16 @@ class PIRASMARTUART(object):
     def translate_reset_cause(self, reset_cause):
         """It translates numbered reset cause into reset cause in string"""
         if reset_cause == 0:
-            return "POWER ON RESET"    
+            return "POWER ON RESET"
         elif reset_cause == 1:
-            return "EXTERNAL RESET"    
+            return "EXTERNAL RESET"
         elif reset_cause == 2:
-            return "SOFTWARE RESET"    
+            return "SOFTWARE RESET"
         elif reset_cause == 3:
-            return "WATCHDOG RESET"    
+            return "WATCHDOG RESET"
         elif reset_cause == 4:
-            return "FIREWALL RESET"    
+            return "FIREWALL RESET"
         elif reset_cause == 5:
-            return "OTHER RESET"    
+            return "OTHER RESET"
         elif reset_cause == 6:
-            return "STANDBY RESET"    
+            return "STANDBY RESET"

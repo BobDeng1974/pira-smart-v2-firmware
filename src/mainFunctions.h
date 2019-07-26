@@ -14,17 +14,15 @@
 #include "RaspberryPiControl.h"
 
 //Global variables that are defined in main
-extern uint32_t piraStatus;
-extern uint32_t onPeriodValue;
-extern uint32_t offPeriodValue;
-extern uint32_t rebootThresholdValue;
-extern uint32_t wakeupThresholdValue;
+extern uint32_t safety_power_period;
+extern uint32_t safety_sleep_period;
+extern uint32_t safety_reboot;
+extern uint32_t operational_wakeup;
 extern bool turnOnRpi;
-extern uint32_t resetCause;
 extern ISL1208_RTC rtc; 
 extern BatteryVoltage batteryVoltage;
-extern uint16_t batteryLevelContainer;
-extern time_t seconds; 
+extern uint16_t status_battery;
+extern time_t status_time; 
 
 //Variable that is defined in RaspberryPiControl.h
 extern uint32_t elapsed;  

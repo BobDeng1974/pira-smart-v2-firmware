@@ -20,7 +20,7 @@
  *      stateTimeoutStart
  *          Set everytime we call stateTransition funtion.
  */
-state_e state = WAIT_STATUS_ON;
+state_e status_state_machine = WAIT_STATUS_ON;
 state_e statePrev = WAIT_STATUS_ON;
 state_e stateGotoTimeout;
 uint32_t elapsed;
@@ -34,8 +34,8 @@ uint32_t stateTimeoutStart;
 void stateTransition(state_e next)
 {
   stateTimeoutStart = millis();
-  statePrev=state;
-  state = next;
+  statePrev=status_state_machine;
+  status_state_machine = next;
 }
 
 /**
@@ -62,21 +62,21 @@ bool stateCheckTimeout(void)
 /**
  * @brief Returns state string from given state enum
  *
- * @param state
+ * @param status_state_machine
  *
  * @return char*
  */
-char* returnState(state_e state)
+char* returnState(state_e status_state_machine)
 {
     static char buffer[20];
 
-    if(state == IDLE)
+    if(status_state_machine == IDLE)
         sprintf(buffer, "%s", "IDLE");
-    if(state == WAIT_STATUS_ON)
+    if(status_state_machine == WAIT_STATUS_ON)
         sprintf(buffer, "%s", "WAIT_STATUS_ON");
-    if(state == WAKEUP)
+    if(status_state_machine == WAKEUP)
         sprintf(buffer, "%s", "WAKEUP");
-    if(state == REBOOT_DETECTION)
+    if(status_state_machine == REBOOT_DETECTION)
         sprintf(buffer, "%s", "REBOOT_DETECTION");
 
     return buffer;
@@ -85,18 +85,18 @@ char* returnState(state_e state)
 /**
  * @brief Main finite state machine loop for Raspberry Pi
  *
- * @param onThreshold
- * @param offThreshold
- * @param wakeupThreshold
- * @param rebootThreshold
+ * @param safety_power_period
+ * @param safety_sleep_period
+ * @param operational_wakeup
+ * @param safety_reboot
  * @param turnOnRpi
  *
  * @return none (void)
  */
-void raspiStateMachine(uint32_t onThreshold,
-                       uint32_t offThreshold,
-                       uint32_t wakeupThreshold,
-                       uint32_t rebootThreshold,
+void raspiStateMachine(uint32_t safety_power_period,
+                       uint32_t safety_sleep_period,
+                       uint32_t operational_wakeup,
+                       uint32_t safety_reboot,
                        bool turnOnRpi)
 {
 
@@ -105,7 +105,7 @@ void raspiStateMachine(uint32_t onThreshold,
     raspiSerial.print("fsm(");
     raspiSerial.print(returnState(statePrev));
     raspiSerial.print(" -> ");
-    raspiSerial.print(returnState(state));
+    raspiSerial.print(returnState(status_state_machine));
     raspiSerial.print(",");
     raspiSerial.print(millis());
     raspiSerial.print(",");
@@ -115,15 +115,15 @@ void raspiStateMachine(uint32_t onThreshold,
     raspiSerial.flush();
 #endif
 
-    switch(state)
+    switch(status_state_machine)
     {
         case IDLE:
 
-            //Typical usecase would be that wakeupThreshold < offThreshold
-            if(wakeupThreshold < offThreshold)
-                stateTimeoutDuration = wakeupThreshold;
+            //Typical usecase would be that operational_wakeup < safety_sleep_period
+            if(operational_wakeup < safety_sleep_period)
+                stateTimeoutDuration = operational_wakeup;
             else
-                stateTimeoutDuration = offThreshold;
+                stateTimeoutDuration = safety_sleep_period;
 
             stateGotoTimeout = WAIT_STATUS_ON;
 
@@ -141,7 +141,7 @@ void raspiStateMachine(uint32_t onThreshold,
 
         case WAIT_STATUS_ON:
 
-            stateTimeoutDuration = onThreshold;
+            stateTimeoutDuration = safety_power_period;
             stateGotoTimeout = IDLE;
 
             // WAIT_STATUS_ON state reached, turn on power for raspberry pi
@@ -155,7 +155,7 @@ void raspiStateMachine(uint32_t onThreshold,
 
         case WAKEUP:
 
-            stateTimeoutDuration = onThreshold;
+            stateTimeoutDuration = safety_power_period;
             stateGotoTimeout = IDLE;
 
             //Check status pin, if low then turn off power supply.
@@ -166,7 +166,7 @@ void raspiStateMachine(uint32_t onThreshold,
 
         case REBOOT_DETECTION:
 
-            stateTimeoutDuration = rebootThreshold;
+            stateTimeoutDuration = safety_reboot;
             stateGotoTimeout = IDLE;
 
             if(digitalRead(RASPBERRY_PI_STATUS))
@@ -177,7 +177,7 @@ void raspiStateMachine(uint32_t onThreshold,
 
         default:
 
-            state=IDLE;
+            status_state_machine=IDLE;
 
             break;
     }
