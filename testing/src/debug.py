@@ -19,19 +19,9 @@ class Debug():
             print('Pira     : s - safety off period  : {} s'.format(self.boot.get_pira_sleep_timer()))
             print('Pira     : r - reboot period      : {} s'.format(self.boot.get_pira_reboot_timer()))
             print('Pira     : w - next wakeup        : {} s'.format(self.boot.get_pira_wakeup_timer()))
-            print('Pira     : m - state              : {} '.format(self.translate_state(self.boot.get_pira_state())))
+            print('Pira     : m - state              : {} '.format(self.boot.get_pira_state()))
         else:
             print('Pira     : Not connected')
 
         print('=======================================================')
 
-    def translate_state(self, state):
-        """It translates numbered state into state in string"""
-        if state == 0:
-            return "IDLE"
-        elif state == 1:
-            return "WAIT_STATUS_ON"
-        elif state == 2:
-            return "WAKEUP"
-        elif state == 3:
-            return "REBOOT_DETECTION"

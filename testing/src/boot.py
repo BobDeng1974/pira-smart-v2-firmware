@@ -12,7 +12,6 @@ class Boot():
 
     def setup_gpio(self):
         """Initialize GPIO."""
-        print("Initializing GPIO...")
         # Set numbering mode 
         gpio.setmode(gpio.BCM)
         gpio.setwarnings(False)
@@ -21,28 +20,26 @@ class Boot():
 
         # Set POWER PIN
         gpio.setup(devices.GPIO_POWER_SUPPLY_PIN, gpio.IN, pull_up_down=gpio.PUD_DOWN)
+        self.print_and_log("Initialization of GPIO                               OK")
 
     def setup_uart(self):
         """Initialize uart driver."""
-        print("Initializing UART...")
-        self.pirasmart = pirasmartuart.PIRASMARTUART(devices.PIRASMART_UART)
+        self.pirasmart = pirasmartuart.PIRASMARTUART(devices.PIRASMART_UART, self)
+        self.print_and_log("Initialization of UART                               OK")
 
     def setup_logging(self):
         """Initialize logging."""
-        print("Initializing LOGGING, logs will be saved into logging.log file")
 
         logging.basicConfig(filename='logging.log', format='%(asctime)s-%(levelname)s|%(message)s', level=logging.DEBUG)
-        logging.info('---------------------------------------------')
-        logging.info('-------------Logging initialized!------------')
-        logging.info('---------------------------------------------')
 
     def setup_debug(self):
         """Initialize debug output"""
-        print("Initializing DEBUG...")
         self.debug = debug.Debug(self)
+        self.print_and_log("Initialization of DEBUG                              OK")
 
     def setup_time(self):
         """Syncs time between raspberry and pira"""
+
         self.pira_ok = self.pirasmart.read()
         if self.pira_ok:
             rtc_time = self.get_time()
@@ -54,29 +51,35 @@ class Boot():
         # Sync time 
         if rtc_time > system_time:
             #write RTC to system
-            print("Writing RTC to system time")
+            #self.print_and_log("Writing RTC to system time")
             args = ['date', '-s', rtc_time.strftime("%Y-%m-%d %H:%M:%S")]
             subprocess.Popen(args)
             #note if ntp is running it will override this, meaning there is network time
         elif rtc_time < system_time:
             #write system_time to rtc
-            print("Writing system time to RTC")
+            #self.print_and_log("Writing system time to RTC")
             epoch_string = datetime.datetime.now().strftime('%s')
             self.pirasmart.set_time(epoch_string)
 
         else:
             #if equal no need to do anything
             pass
+        self.print_and_log("Initialization of RTC TIME                           OK")
 
     def setup(self):
         """Initialize all setups"""
 
+        self.setup_logging()
+        self.print_and_log('=========================BOOT==========================')
         self.setup_gpio()
         self.setup_uart()
-        self.setup_logging()
         self.setup_debug()
         self.setup_time()
 
+    def print_and_log(self, message):
+        """Function will print given message into console and into log file"""
+        print(message)
+        logging.info(message)
 
     def get_voltage(self):  # b variable
         """Get voltage """
@@ -99,7 +102,7 @@ class Boot():
         return timer_pira
 
     def get_pira_overview(self):    # o variable
-        """Get pira overwiev - status value """
+        """Get pira overview - status value """
         overview = self.pirasmart.pira_overview
         return overview
 

@@ -131,6 +131,12 @@ void uartCommandReceive(void)
                         uartCommandParse(rxBuffer);
                         rxIndex = 0;
                     }
+                    else if (rxIndex == (RX_BUFFER_SIZE - 2))
+                    {
+                        // Sent data could be number 10, which in ascii is equal to \n
+                        // This else if statement prevents the number 10 from being discarded
+                        rxIndex++;
+                    }
                     else
                     {
                         // Incorrect length, clean up buffer

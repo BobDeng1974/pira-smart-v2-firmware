@@ -13,11 +13,11 @@ class PIRASMARTUART(object):
     pira_voltage = None
     pira_on_timer = None
 
-    def __init__(self, portId):
+    def __init__(self, portId, boot):
 
         self.ser = None
         self.portId = portId
-
+        self.boot = boot
         try:
 
             self.ser = serial.Serial(self.portId, baudrate=115200, stopbits=1, parity="N",  timeout=2)
@@ -77,11 +77,22 @@ class PIRASMARTUART(object):
 
             try:
                 x = ""
-                x = self.ser.readline()
+                x = self.ser.read(7) # Reads 7 bytes, not until the end of the line like ser.readline() did
+
                 #print("Preamble: " + x[0:2] + "Data: " + x[2:-1].encode('hex') + " Line: " + str(x.startswith(preamble)))
                 #' '.join(map(lambda x:x.encode('hex'),x))
                 #struct.unpack('<h', unhexlify(s1))[0]
-                value = float(struct.unpack('>L', x[2:6])[0])
+                #if len(x) == 6:
+                #    value = 10.0
+                #else:
+
+                # Following if statement is needed in case Pira sends nothing,
+                # in that case we assume that Pira is in IDLE state
+                if len(x) == 0:
+                    self.pira_state = self.translate_state(int(0))
+                    return False
+                else:
+                    value = float(struct.unpack('>L', x[2:6])[0])
             except:
                 print("WARNING: read from Pira BLE the following: " + str(x[2:6]))
                 time.sleep(1)
@@ -118,10 +129,11 @@ class PIRASMARTUART(object):
                 self.pira_command  = int(value)
                 #print "Pira command : " + str(self.pira_command)
             elif x.startswith(str('e:')):
-                self.pira_reset_cause  = int(value)
-                #print("Pira reset cause : " +  self.translate_reset_cause(self.pira_reset_cause))
+                self.pira_reset_cause  =  self.translate_reset_cause(int(value))
+                self.boot.print_and_log('=======================================================')
+                self.boot.print_and_log("!!!!!!!PIRA RESET CAUSE :          " +  str(self.pira_reset_cause) + "!!!!!!")
             elif x.startswith(str('m:')):
-                self.pira_state  = int(value)
+                self.pira_state  =  self.translate_state(int(value))
                 #print("Pira state : " + str(self.pira_state))
 
         return True
@@ -182,6 +194,17 @@ class PIRASMARTUART(object):
         elif reset_cause == 4:
             return "FIREWALL RESET"
         elif reset_cause == 5:
-            return "OTHER RESET"
+            return "   OTHER RESET"
         elif reset_cause == 6:
-            return "STANDBY RESET"
+            return " STANDBY RESET"
+
+    def translate_state(self, state):
+        """It translates numbered state into state in string"""
+        if state == 0:
+            return "IDLE"
+        elif state == 1:
+            return "WAIT_STATUS_ON"
+        elif state == 2:
+            return "WAKEUP"
+        elif state == 3:
+            return "REBOOT_DETECTION"
