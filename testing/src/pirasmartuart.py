@@ -132,6 +132,7 @@ class PIRASMARTUART(object):
                 self.pira_reset_cause  =  self.translate_reset_cause(int(value))
                 self.boot.print_and_log('=======================================================')
                 self.boot.print_and_log("!!!!!!!PIRA RESET CAUSE :          " +  str(self.pira_reset_cause) + "!!!!!!")
+                self.boot.reset_flag = True
             elif x.startswith(str('m:')):
                 self.pira_state  =  self.translate_state(int(value))
                 #print("Pira state : " + str(self.pira_state))

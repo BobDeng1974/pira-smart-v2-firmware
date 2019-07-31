@@ -9,6 +9,12 @@ import debug
 
 class Boot():
     """Used to call all init processes at start of program"""
+    def __init__(self):
+        # Used for signaling is reset of Pira happened
+        # It is set in pirasmart.read() if received
+        # It is reset in test.start_test() when tested routine is exited and flag was set 
+        self.reset_flag = False
+        self.setup()
 
     def setup_gpio(self):
         """Initialize GPIO."""

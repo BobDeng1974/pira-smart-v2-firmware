@@ -21,7 +21,7 @@ class Debug():
             print('Pira     : w - next wakeup        : {} s'.format(self.boot.get_pira_wakeup_timer()))
             print('Pira     : m - state              : {} '.format(self.boot.get_pira_state()))
         else:
-            print('Pira     : Not connected')
+            print('Pira     : Not connected or in IDLE state')
 
         print('=======================================================')
 
