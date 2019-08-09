@@ -1,0 +1,74 @@
+Succesful tests:
+NUMBER ONE:
+    parameters:
+        "pira_on_time": 5, 
+        "pira_off_time": 5, 
+        "pira_reboot_time": 5, 
+        "pira_wakeup_time": 5
+    copy of Test objects in main.py:
+        Test(boot, test_data_index=0, test_routine=0, num_rep=10)
+        Test(boot, test_data_index=0, test_routine=1, num_rep=10)
+        Test(boot, test_data_index=0, test_routine=2, num_rep=10)
+        Test(boot, test_data_index=0, test_routine=3, num_rep=10)
+        Test(boot, test_data_index=0, test_routine=4, num_rep=10)
+
+NUMBER TWO:
+    parameters:
+        "pira_on_time": 20, 
+        "pira_off_time": 20,
+        "pira_reboot_time": 20, 
+        "pira_wakeup_time": 20,
+    copy of Test objects in main.py:
+        Test(boot, test_data_index=0, test_routine=0, num_rep=10)
+        Test(boot, test_data_index=0, test_routine=1, num_rep=10)
+        Test(boot, test_data_index=0, test_routine=2, num_rep=10)
+        Test(boot, test_data_index=0, test_routine=3, num_rep=10)
+        Test(boot, test_data_index=0, test_routine=4, num_rep=10)
+
+NUMBER THREE:
+    parameters:
+        "pira_on_time": 300, 
+        "pira_off_time": 300, 
+        "pira_reboot_time": 60, 
+        "pira_wakeup_time": 300
+    copy of Test objects in main.py:
+        Test(boot, test_data_index=2, test_routine=0, num_rep=3)
+        Test(boot, test_data_index=2, test_routine=1, num_rep=3)
+        Test(boot, test_data_index=2, test_routine=2, num_rep=3)
+        Test(boot, test_data_index=2, test_routine=3, num_rep=3)
+        Test(boot, test_data_index=2, test_routine=4, num_rep=3)
+
+NUMBER FOUR:
+    parameters:
+        "pira_on_time": 3600, 
+        "pira_off_time": 3600, 
+        "pira_reboot_time": 60, 
+        "pira_wakeup_time": 3600
+    copy of Test objects in main.py:
+        Test(boot, test_data_index=3, test_routine=0, num_rep=1)
+        Test(boot, test_data_index=3, test_routine=1, num_rep=1)
+        Test(boot, test_data_index=3, test_routine=2, num_rep=1)
+        Test(boot, test_data_index=3, test_routine=3, num_rep=1)
+        Test(boot, test_data_index=3, test_routine=4, num_rep=1)
+
+NUMBER FIVE:
+    parameters:
+        "pira_on_time": 60, 
+        "pira_off_time": 3600, 
+        "pira_reboot_time": 60, 
+        "pira_wakeup_time": 1800 
+    copy of Test objects in main.py:
+        Test(boot, test_data_index=4, test_routine=0, num_rep=10)
+        Test(boot, test_data_index=4, test_routine=1, num_rep=10)
+        Test(boot, test_data_index=4, test_routine=2, num_rep=10)
+        Test(boot, test_data_index=4, test_routine=3, num_rep=10)
+        Test(boot, test_data_index=4, test_routine=4, num_rep=10)
+
+NUMBER SIX:
+    parameters:
+        "pira_on_time": 300, 
+        "pira_off_time": 300, 
+        "pira_reboot_time": 60, 
+        "pira_wakeup_time": 300
+    copy of Test objects in main.py:
+        Test(boot, test_data_index=2, test_routine=4, num_rep=200)

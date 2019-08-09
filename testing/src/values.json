@@ -1,16 +1,40 @@
 {
   "values": [
     {
-      "pira_on_time": 15, 
-      "pira_off_time": 15, 
-      "pira_reboot_time": 15, 
-      "pira_wakeup_time": 15
+      "pira_on_time": 5, 
+      "pira_off_time": 5, 
+      "pira_reboot_time": 5, 
+      "pira_wakeup_time": 5
     }, 
     {
-      "pira_on_time": 10, 
-      "pira_off_time": 10, 
-      "pira_reboot_time": 10, 
-      "pira_wakeup_time": 10
-    } 
+      "pira_on_time": 20, 
+      "pira_off_time": 20, 
+      "pira_reboot_time": 20, 
+      "pira_wakeup_time": 20
+    }, 
+    {
+      "pira_on_time": 300, 
+      "pira_off_time": 300, 
+      "pira_reboot_time": 60, 
+      "pira_wakeup_time": 300
+    },
+    {
+      "pira_on_time": 3600, 
+      "pira_off_time": 3600, 
+      "pira_reboot_time": 60, 
+      "pira_wakeup_time": 3600
+    },
+    {
+      "pira_on_time": 60, 
+      "pira_off_time": 3600, 
+      "pira_reboot_time": 60, 
+      "pira_wakeup_time": 1800 
+    },
+    {
+      "pira_on_time": 60, 
+      "pira_off_time": 3600, 
+      "pira_reboot_time": 60, 
+      "pira_wakeup_time": 600 
+    }
   ]
 }

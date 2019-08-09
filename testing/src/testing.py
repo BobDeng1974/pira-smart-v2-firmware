@@ -153,7 +153,10 @@ class Test():
         if current_state == "WAIT_STATUS_ON" or current_state == "WAKEUP":
             i = 0
         elif current_state == "IDLE":
-            i = 1
+            if self.test_data[1] < self.test_data[3]:
+                i = 1
+            else:
+                i = 3
         elif current_state == "REBOOT_DETECTION":
             i = 2
         else:
@@ -221,7 +224,6 @@ class Test():
         else:
             self.boot.print_and_log("Current state: WAIT_STATUS_ON")
 
-        sleep(1)
         self.set_status_pin_high()
 
         if not self.wait_for_next_state(current_state="WAIT_STATUS_ON", expected_state="WAKEUP"):
@@ -231,7 +233,6 @@ class Test():
         else:
             self.boot.print_and_log("Current state: WAKEUP")
 
-        sleep(1)
         self.set_status_pin_low()
 
         if not self.wait_for_next_state(current_state="WAKEUP", expected_state="REBOOT_DETECTION"):
@@ -270,7 +271,6 @@ class Test():
         else:
             self.boot.print_and_log("Current state: WAIT_STATUS_ON")
 
-        sleep(1)
         self.set_status_pin_high()
 
         if not self.wait_for_next_state(current_state="WAIT_STATUS_ON", expected_state="WAKEUP"):
@@ -286,7 +286,6 @@ class Test():
             self.boot.print_and_log("Current state: IDLE")
 
         # Turn off status pin, to mimic behavior off turned off raspi
-        sleep(1)
         self.set_status_pin_low()
 
         if not self.wait_for_next_state(current_state="IDLE", expected_state="WAIT_STATUS_ON"):
@@ -316,7 +315,6 @@ class Test():
         else:
             self.boot.print_and_log("Current state: WAIT_STATUS_ON")
 
-        sleep(1)
         self.set_status_pin_high()
 
         if not self.wait_for_next_state(current_state="WAIT_STATUS_ON", expected_state="WAKEUP"):
@@ -325,7 +323,6 @@ class Test():
         else:
             self.boot.print_and_log("Current state: WAKEUP")
 
-        sleep(1)
         self.set_status_pin_low()
 
         if not self.wait_for_next_state(current_state="WAKEUP", expected_state="REBOOT_DETECTION"):
@@ -334,7 +331,6 @@ class Test():
         else:
             self.boot.print_and_log("Current state: REBOOT_DETECTION")
 
-        sleep(1)
         self.set_status_pin_high()
 
         if not self.wait_for_next_state(current_state="REBOOT_DETECTION", expected_state="WAKEUP"):
@@ -350,7 +346,6 @@ class Test():
             self.boot.print_and_log("Current state: IDLE")
 
         # Turn off status pin, to mimic behavior of turned off raspi
-        sleep(1)
         self.set_status_pin_low()
 
         if not self.wait_for_next_state(current_state="IDLE", expected_state="WAIT_STATUS_ON"):
@@ -381,7 +376,6 @@ class Test():
         else:
             self.boot.print_and_log("Current state: WAIT_STATUS_ON")
 
-        sleep(1)
         self.set_status_pin_high()
 
         if not self.wait_for_next_state(current_state="WAIT_STATUS_ON", expected_state="WAKEUP"):
@@ -391,7 +385,6 @@ class Test():
         else:
             self.boot.print_and_log("Current state: WAKEUP")
 
-        sleep(1)
         self.set_status_pin_low()
 
         if not self.wait_for_next_state(current_state="WAKEUP", expected_state="REBOOT_DETECTION"):
@@ -401,7 +394,6 @@ class Test():
         else:
             self.boot.print_and_log("Current state: REBOOT_DETECTION")
 
-        sleep(1)
         self.set_status_pin_high()
 
         if not self.wait_for_next_state(current_state="REBOOT_DETECTION", expected_state="WAKEUP"):
@@ -411,7 +403,6 @@ class Test():
         else:
             self.boot.print_and_log("Current state: WAKEUP")
 
-        sleep(1)
         self.set_status_pin_low()
 
         if not self.wait_for_next_state(current_state="WAKEUP", expected_state="REBOOT_DETECTION"):
