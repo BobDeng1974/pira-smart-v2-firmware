@@ -3,3 +3,4 @@
 *.dfu
 .vscode
 *.pyc
+debug/

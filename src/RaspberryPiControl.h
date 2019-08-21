@@ -14,15 +14,13 @@ enum state_e
     WAKEUP,
     REBOOT_DETECTION,
 };
+extern state_e status_state_machine;
+extern uint32_t elapsed;
 
 void stateTransition(state_e next);
 bool stateCheckTimeout(void);
 char* returnState(state_e state);
 
-void raspiStateMachine(uint32_t safety_power_period,
-                       uint32_t safety_sleep_period,
-                       uint32_t operational_wakeup,
-                       uint32_t safety_reboot,
-                       bool turnOnRpi);
+void raspiStateMachine();
 
 #endif /* RASPBERRY_PI_CONTROL_H */

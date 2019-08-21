@@ -1,21 +1,34 @@
 #include "BatteryVoltage.h"
-//TODO some adc stuff, leave it commented outfor now
-BatteryVoltage::BatteryVoltage(void)
-{
-    batteryLevel = 0;    
 
+/**
+ * @brief Prepares adc for reading battery voltage 
+ *
+ * @return none (void)
+ */
+void init_battery_adc(void)
+{
     // Enable adc  
     stm32l0_adc_enable();
 }
  
-uint16_t BatteryVoltage::batteryLevelGet(void)
+/**
+ * @brief Returns voltage in adc counts  
+ *
+ * @return uint16_t 
+ */
+uint16_t get_raw_battery_voltage(void)
 {
     // Configure channel and start conversion
-    batteryLevel = (uint16_t)stm32l0_adc_read(BATTERY_VOLTAGE, 5);
-    return batteryLevel; // 12 bit
+    return (uint16_t)stm32l0_adc_read(BATTERY_VOLTAGE, 5); // 12 bit
 }
     
-float BatteryVoltage::batteryVoltageGet(uint16_t adcValue)
+/**
+ * @brief Returns battery voltage in volts 
+ *
+ * @param adcValue
+ * @return float 
+ */
+float get_battery_voltage(uint16_t adcValue)
 {
-    return (adcValue * referenceVoltageV * (resistorLowerKOhm + resistorUpperKOhm) / (float)(adcMax * resistorLowerKOhm));
+    return (adcValue * REFERENCE_VOLTAGE_V * (RESISTOR_LOWER_KOHM + RESISTOR_UPPER_KOHM) / (float)(ADC_MAX * RESISTOR_LOWER_KOHM));
 }

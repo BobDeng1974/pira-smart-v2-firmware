@@ -93,11 +93,7 @@ char* returnState(state_e status_state_machine)
  *
  * @return none (void)
  */
-void raspiStateMachine(uint32_t safety_power_period,
-                       uint32_t safety_sleep_period,
-                       uint32_t operational_wakeup,
-                       uint32_t safety_reboot,
-                       bool turnOnRpi)
+void raspiStateMachine()
 {
 
 
@@ -120,19 +116,19 @@ void raspiStateMachine(uint32_t safety_power_period,
         case IDLE:
 
             //Typical usecase would be that operational_wakeup < safety_sleep_period
-            if(operational_wakeup < safety_sleep_period)
-                stateTimeoutDuration = operational_wakeup;
+            if(settings_packet.data.operational_wakeup < settings_packet.data.safety_sleep_period)
+                stateTimeoutDuration = settings_packet.data.operational_wakeup;
             else
-                stateTimeoutDuration = safety_sleep_period;
+                stateTimeoutDuration = settings_packet.data.safety_sleep_period;
 
             stateGotoTimeout = WAIT_STATUS_ON;
 
             // IDLE state reached, turn off power for raspberry pi
             digitalWrite(POWER_ENABLE_5V, LOW);
 
-            if(turnOnRpi)
+            if(settings_packet.data.turnOnRpi)
             {
-                turnOnRpi = false;
+                settings_packet.data.turnOnRpi = false;
 
                 //Change state
                 stateTransition(WAIT_STATUS_ON);
@@ -141,7 +137,7 @@ void raspiStateMachine(uint32_t safety_power_period,
 
         case WAIT_STATUS_ON:
 
-            stateTimeoutDuration = safety_power_period;
+            stateTimeoutDuration = settings_packet.data.safety_power_period;
             stateGotoTimeout = IDLE;
 
             // WAIT_STATUS_ON state reached, turn on power for raspberry pi
@@ -155,7 +151,7 @@ void raspiStateMachine(uint32_t safety_power_period,
 
         case WAKEUP:
 
-            stateTimeoutDuration = safety_power_period;
+            stateTimeoutDuration = settings_packet.data.safety_power_period;
             stateGotoTimeout = IDLE;
 
             //Check status pin, if low then turn off power supply.
@@ -166,7 +162,7 @@ void raspiStateMachine(uint32_t safety_power_period,
 
         case REBOOT_DETECTION:
 
-            stateTimeoutDuration = safety_reboot;
+            stateTimeoutDuration = settings_packet.data.safety_reboot;
             stateGotoTimeout = IDLE;
 
             if(digitalRead(RASPBERRY_PI_STATUS))

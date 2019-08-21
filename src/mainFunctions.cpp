@@ -1,7 +1,6 @@
 #include "mainFunctions.h"
 
-extern state_e status_state_machine;
-
+ISL1208_RTC rtc;
 /**
  * @brief Function parses recived commands depending on starting character
  *
@@ -27,11 +26,11 @@ void uartCommandParse(uint8_t *rxBuffer)
                 break;
             case 'p':
                 //raspiSerial.println("p: received");
-                safety_power_period = data;
+                settings_packet.data.safety_power_period = data;
                 break;
             case 's':
                 //raspiSerial.println("s: received");
-                safety_sleep_period = data;
+                settings_packet.data.safety_sleep_period = data;
                 break;
             case 'c':
                 //raspiSerial.println("c: received");
@@ -39,11 +38,11 @@ void uartCommandParse(uint8_t *rxBuffer)
                 break;
             case 'r':
                 //raspiSerial.println("r: received");
-                safety_reboot = data;
+                settings_packet.data.safety_reboot = data;
                 break;
             case 'w':
                 //raspiSerial.println("w: received");
-                operational_wakeup = data;
+                settings_packet.data.operational_wakeup = data;
                 break;
             default:
                 break;
@@ -174,13 +173,13 @@ void uartCommandReceive(void)
  */
 void updateStatusValues(void)
 {
-    uartCommandSend('t', status_time);
+    uartCommandSend('t', (uint32_t)settings_packet.data.status_time);
     uartCommandSend('o', getOverviewValue());
-    uartCommandSend('b', (uint32_t)status_battery);
-    uartCommandSend('p', safety_power_period);
-    uartCommandSend('s', safety_sleep_period);
-    uartCommandSend('r', safety_reboot);
-    uartCommandSend('w', operational_wakeup);
+    uartCommandSend('b', (uint32_t)get_battery_voltage(get_raw_battery_voltage()));
+    uartCommandSend('p', settings_packet.data.safety_power_period);
+    uartCommandSend('s', settings_packet.data.safety_sleep_period);
+    uartCommandSend('r', settings_packet.data.safety_reboot);
+    uartCommandSend('w', settings_packet.data.operational_wakeup);
     uartCommandSend('a', (uint32_t)digitalRead(RASPBERRY_PI_STATUS));
     uartCommandSend('m', status_state_machine);
 }
@@ -193,17 +192,17 @@ void updateStatusValues(void)
 void printStatusValues(void)
 {
     raspiSerial.print("Battery level in V = ");
-    raspiSerial.println((int)(batteryVoltage.batteryVoltageGet(status_battery)*100));
+    raspiSerial.println(get_battery_voltage(get_raw_battery_voltage()));
     raspiSerial.print("safety_power_period =");
-    raspiSerial.println(safety_power_period);
+    raspiSerial.println(settings_packet.data.safety_power_period);
     raspiSerial.print("safety_sleep_period =");
-    raspiSerial.println(safety_sleep_period);
+    raspiSerial.println(settings_packet.data.safety_sleep_period);
     raspiSerial.print("safety_reboot = ");
-    raspiSerial.println(safety_reboot);
+    raspiSerial.println(settings_packet.data.safety_reboot);
     raspiSerial.print("operational_wakeup = ");
-    raspiSerial.println(operational_wakeup);
+    raspiSerial.println(settings_packet.data.operational_wakeup);
     raspiSerial.print("turnOnRpiState = ");
-    raspiSerial.println(turnOnRpi);
+    raspiSerial.println(settings_packet.data.turnOnRpi);
     raspiSerial.print("Status Pin = ");
     raspiSerial.println(digitalRead(RASPBERRY_PI_STATUS));
     raspiSerial.print("Overview = ");
@@ -219,9 +218,9 @@ uint32_t getOverviewValue(void)
 {
     // Calculate overview value
     if(status_state_machine == WAIT_STATUS_ON || status_state_machine == WAKEUP)
-        return safety_power_period - elapsed;
+        return settings_packet.data.safety_power_period - elapsed;
     else if(status_state_machine == REBOOT_DETECTION)
-        return safety_reboot - elapsed;
+        return settings_packet.data.safety_reboot - elapsed;
 
     return 0;
 }
@@ -231,7 +230,7 @@ uint32_t getOverviewValue(void)
  *
  * @return none (void)
  */
-void initRtc()
+void initRtc(time_t t)
 {
     rtc.begin();
 
@@ -251,7 +250,7 @@ void initRtc()
             raspiSerial.println("RTC has lost power! Resetting time...");
 #endif
             //Set RTC time to Mon, 1 Jan 2018 00:00:00
-            time(TIME_INIT_VALUE);
+            time(t);
         }
     }
     else

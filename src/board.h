@@ -2,6 +2,7 @@
 #define BOARD_H
 
 #include <Arduino.h>
+#include "STM32L0.h"
 
 //    #define DEBUG
 //    #define DEBUG_BLE

@@ -5,21 +5,13 @@
 #include "board.h" 
 #include "stm32l0_adc.h"
 
-class BatteryVoltage
-{
-public:
-    const static uint8_t    resistorLowerKOhm =     100;  //100kOhm 
-    const static uint8_t    resistorUpperKOhm =     226;  //226kOhm 
-    constexpr static float  referenceVoltageV =   2.610;   
-    const static uint16_t   adcMax            =    4095;   
-    const static uint8_t    resolution        =      12;  // 12 bit resolution 
+#define RESISTOR_LOWER_KOHM 100     //100kOhm 
+#define RESISTOR_UPPER_KOHM 226     //226kOhm 
+#define REFERENCE_VOLTAGE_V 2.611f
+#define ADC_MAX             4095   
+#define RESOLUTION          12      // 12 bit resolution 
 
-    BatteryVoltage(void);
-    uint16_t batteryLevelGet(void);
-    float batteryVoltageGet(uint16_t adcValue);
-
-private:
-    uint16_t  batteryLevel;
-};
-
+void init_battery_adc(void);
+uint16_t get_raw_battery_voltage(void);
+float get_battery_voltage(uint16_t adcValue);
 #endif /* BATTERY_VOLTAGE_H */

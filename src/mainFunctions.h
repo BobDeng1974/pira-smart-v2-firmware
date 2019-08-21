@@ -12,22 +12,12 @@
 #include "board.h" 
 #include "BatteryVoltage.h"
 #include "RaspberryPiControl.h"
+#include "settings.h"
 
-//Global variables that are defined in main
-extern uint32_t safety_power_period;
-extern uint32_t safety_sleep_period;
-extern uint32_t safety_reboot;
-extern uint32_t operational_wakeup;
-extern bool turnOnRpi;
+// RTC object 
 extern ISL1208_RTC rtc; 
-extern BatteryVoltage batteryVoltage;
-extern uint16_t status_battery;
-extern time_t status_time; 
 
-//Variable that is defined in RaspberryPiControl.h
-extern uint32_t elapsed;  
-
-//Uart related functions
+// Uart related functions
 void uartCommandParse(uint8_t *rxBuffer);
 void uartCommandSend(char command, uint32_t data);
 void uartCommandReceive(void);
@@ -35,12 +25,12 @@ void updateStatusValues(void);
 void printStatusValues(void);
 uint32_t getOverviewValue(void);
 
-//RTC related funtions
-void initRtc();
+// RTC related funtions
+void initRtc(time_t);
 time_t time();
 void time(time_t t);
 
-//I2C related funtions
+// I2C related funtions
 char read8(char addr, char reg);
 void write8(char addr, char reg, char data);
 unsigned int bcd2bin(unsigned char val);
