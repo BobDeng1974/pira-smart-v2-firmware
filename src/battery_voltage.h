@@ -1,7 +1,6 @@
 #ifndef BATTERY_VOLTAGE_H
 #define BATTERY_VOLTAGE_H
 
-#include <stdint.h>
 #include "board.h" 
 #include "stm32l0_adc.h"
 
@@ -14,4 +13,5 @@
 void init_battery_adc(void);
 uint16_t get_raw_battery_voltage(void);
 float get_battery_voltage(uint16_t adcValue);
+
 #endif /* BATTERY_VOLTAGE_H */

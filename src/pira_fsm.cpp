@@ -1,4 +1,4 @@
-#include "RaspberryPiControl.h"
+#include "pira_fsm.h"
 
 //#define DEBUG
 
@@ -28,7 +28,8 @@ uint32_t stateTimeoutDuration;
 uint32_t stateTimeoutStart;
 
 /**
- * @brief Transitions to next state and saves the time when the state was entered.
+ * @brief Transitions to next state and saves the 
+ * time when the state was entered.
  *
  */
 void stateTransition(state_e next)

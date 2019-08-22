@@ -10,8 +10,8 @@
 #include "ISL1208_RTC.h"
 
 #include "board.h" 
-#include "BatteryVoltage.h"
-#include "RaspberryPiControl.h"
+#include "battery_voltage.h"
+#include "pira_fsm.h"
 #include "settings.h"
 
 // RTC object 

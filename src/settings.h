@@ -4,9 +4,8 @@
 #include "Arduino.h"
 #include "board.h"
 #include <STM32L0.h>
-#include "stm32l0_eeprom.h"
 
-struct settingsData_t{
+struct settingsPira_t{
     uint64_t status_time;
     uint16_t status_battery;
     uint32_t safety_power_period;
@@ -17,8 +16,8 @@ struct settingsData_t{
 }__attribute__((packed));
 
 union settingsPacket_t{
-    settingsData_t data;
-    byte bytes[sizeof(settingsData_t)];
+    settingsPira_t data;
+    uint8_t bytes[sizeof(settingsPira_t)];
 };
 
 extern settingsPacket_t settings_packet;

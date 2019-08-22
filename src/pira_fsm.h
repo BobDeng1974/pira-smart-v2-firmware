@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "board.h"
 #include "Arduino.h"
-#include "mainFunctions.h"
+#include "pira_functions.h"
 
 
 enum state_e

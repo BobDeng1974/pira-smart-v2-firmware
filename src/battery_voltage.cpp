@@ -1,4 +1,4 @@
-#include "BatteryVoltage.h"
+#include "battery_voltage.h"
 
 /**
  * @brief Prepares adc for reading battery voltage 
@@ -30,5 +30,7 @@ uint16_t get_raw_battery_voltage(void)
  */
 float get_battery_voltage(uint16_t adcValue)
 {
-    return (adcValue * REFERENCE_VOLTAGE_V * (RESISTOR_LOWER_KOHM + RESISTOR_UPPER_KOHM) / (float)(ADC_MAX * RESISTOR_LOWER_KOHM));
+    return (adcValue * REFERENCE_VOLTAGE_V * 
+            (RESISTOR_LOWER_KOHM + RESISTOR_UPPER_KOHM) / 
+            (float)(ADC_MAX * RESISTOR_LOWER_KOHM));
 }

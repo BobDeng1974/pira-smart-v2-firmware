@@ -1,4 +1,4 @@
-#include "mainFunctions.h"
+#include "pira_functions.h"
 
 ISL1208_RTC rtc;
 /**
@@ -14,7 +14,10 @@ void uartCommandParse(uint8_t *rxBuffer)
     uint8_t secondChar = rxBuffer[1];
     uint32_t data = 0;
 
-    data = (rxBuffer[2] << 24) | (rxBuffer[3] << 16) | (rxBuffer[4] << 8) | (rxBuffer[5]);
+    data = (rxBuffer[2] << 24) | 
+           (rxBuffer[3] << 16) | 
+           (rxBuffer[4] << 8) | 
+           (rxBuffer[5]);
 
     if (secondChar == ':')
     {
@@ -86,8 +89,10 @@ void uartCommandReceive(void)
     uint8_t rxIndex = 0;
     if (raspiSerial.available() != 0)
     {
-        delay(10); // Without delay code thinks that it gets only first character first
-                   // and then the rest of the string, final result is that they are received seperatly.
+        delay(10); // Without delay code thinks that it 
+                   // gets only first character first
+                   // and then the rest of the string, 
+                   // final result is that they are received seperatly.
                    // A short delay prevents that.
         while (raspiSerial.available() > 0)
         {
@@ -122,7 +127,8 @@ void uartCommandReceive(void)
             {
                 if (rxBuffer[rxIndex] == '\n')
                 {
-                    //All data withing the packet has been received, parse the packet and execute commands
+                    // All data withing the packet has been received, 
+                    // parse the packet and execute commands
                     if (rxIndex == (RX_BUFFER_SIZE - 1))
                     {
                         //raspiSerial.print("I received: ");
@@ -132,8 +138,10 @@ void uartCommandReceive(void)
                     }
                     else if (rxIndex == (RX_BUFFER_SIZE - 2))
                     {
-                        // Sent data could be number 10, which in ascii is equal to \n
-                        // This else if statement prevents the number 10 from being discarded
+                        // Sent data could be number 10, 
+                        // which in ascii is equal to \n.
+                        // This else if statement prevents 
+                        // the number 10 from being discarded.
                         rxIndex++;
                     }
                     else
@@ -241,7 +249,7 @@ void initRtc(time_t t)
         raspiSerial.println("RTC detected!");
 #endif
         //Check if we need to reset the time
-        uint8_t powerFailed = read8(ISL1208_ADDRESS, ISL1208_SR);   //read 1 byte of data
+        uint8_t powerFailed = read8(ISL1208_ADDRESS, ISL1208_SR); //read 1 byte of data
 
         if(powerFailed & 0x01)
         {
@@ -326,7 +334,7 @@ void time(time_t t)
     //Write the current time
     write8(ISL1208_ADDRESS, ISL1208_SC, bin2bcd(timeinfo->tm_sec));
     write8(ISL1208_ADDRESS, ISL1208_MN, bin2bcd(timeinfo->tm_min));
-    write8(ISL1208_ADDRESS, ISL1208_HR, bin2bcd(timeinfo->tm_hour) | (1 << 7));    //24-hour mode
+    write8(ISL1208_ADDRESS, ISL1208_HR, bin2bcd(timeinfo->tm_hour) | (1 << 7));
     write8(ISL1208_ADDRESS, ISL1208_DT, bin2bcd(timeinfo->tm_mday));
     write8(ISL1208_ADDRESS, ISL1208_MO, bin2bcd(timeinfo->tm_mon + 1));
     write8(ISL1208_ADDRESS, ISL1208_YR, bin2bcd(timeinfo->tm_year - 100));

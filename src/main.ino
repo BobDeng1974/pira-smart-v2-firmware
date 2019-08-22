@@ -9,9 +9,9 @@
 #include "RN487x_BLE.h"
 
 #include "board.h"
-#include "RaspberryPiControl.h"
-#include "BatteryVoltage.h"
-#include "mainFunctions.h"
+#include "pira_fsm.h"
+#include "battery_voltage.h"
+#include "pira_functions.h"
 #include "settings.h"
 
 
@@ -100,4 +100,5 @@ void loop()
 
         raspiStateMachine();
     }
+    delay(5000);
 }
