@@ -34,3 +34,4 @@ float get_battery_voltage(uint16_t adcValue)
             (RESISTOR_LOWER_KOHM + RESISTOR_UPPER_KOHM) / 
             (float)(ADC_MAX * RESISTOR_LOWER_KOHM));
 }
+/*** end of file ***/

@@ -142,17 +142,23 @@ void uart_command_receive(void)
                     rxIndex = 0;
                 }
                 else
+                {
                     // By protocol, continue receiving.
                     rxIndex++;
+                }
             }
             else if (rxIndex == 1)
             {
                 if (rxBuffer[rxIndex] != ':')
+                {
                     // Anything received that is not by protocol is discarded!
                     rxIndex = 0;
+                }
                 else
+                {
                     // By protocol, continue receiving.
                     rxIndex++;
+                }
             }
             else
             {
@@ -198,7 +204,9 @@ void uart_command_receive(void)
                 {
                     rxIndex++;
                     if (rxIndex > (RX_BUFFER_SIZE - 1))
+                    {
                         rxIndex = 0;
+                    }
                 }
             }
         }
@@ -257,11 +265,17 @@ uint32_t get_overview_value(void)
 {
     // Calculate overview value
     if(status_pira_state_machine == WAIT_STATUS_ON || status_pira_state_machine == WAKEUP)
+    {
         return settings_packet.data.safety_power_period - elapsed;
+    }
     else if(status_pira_state_machine == REBOOT_DETECTION)
+    { 
         return settings_packet.data.safety_reboot - elapsed;
-
-    return 0;
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 /**
@@ -326,7 +340,9 @@ time_t time()
 
         //Check for the PM flag
         if (hours & (1 << 5))
+        {
             timeinfo.tm_hour += 12;
+        }
     }
 
     //Continue reading the registers
@@ -354,7 +370,9 @@ void time(time_t t)
      * in the 2000-2099 range, so any value less than 100 is invalid.
      */
     if (timeinfo->tm_year < 100)
+    {
         return;
+    }
 
     //Read the old SR register value
     char sr = read8(ISL1208_ADDRESS, ISL1208_SR);
@@ -463,16 +481,22 @@ bool state_check_timeout(void)
 {
     // stateTimeoutDuration can be disabled
     if(stateTimeoutDuration == 0)
+    {
         return false;
+    }
 
     elapsed = millis() - stateTimeoutStart;
     elapsed = elapsed/1000; // All values come in seconds, so we also need elapsed in seconds
 
     //check if we have been in the current state too long
     if(elapsed >= stateTimeoutDuration)
+    {
         return true;
+    }
     else
+    {
         return false;
+    }
 }
 
 /**
@@ -487,13 +511,21 @@ char* return_state(state_e status_pira_state_machine)
     static char buffer[20];
 
     if(status_pira_state_machine == IDLE)
+    {
         sprintf(buffer, "%s", "IDLE");
+    }
     if(status_pira_state_machine == WAIT_STATUS_ON)
+    {
         sprintf(buffer, "%s", "WAIT_STATUS_ON");
+    }
     if(status_pira_state_machine == WAKEUP)
+    {
         sprintf(buffer, "%s", "WAKEUP");
+    }
     if(status_pira_state_machine == REBOOT_DETECTION)
+    {
         sprintf(buffer, "%s", "REBOOT_DETECTION");
+    }
 
     return buffer;
 }
@@ -531,9 +563,13 @@ void pira_state_machine()
 
             //Typical usecase would be that operational_wakeup < safety_sleep_period
             if(settings_packet.data.operational_wakeup < settings_packet.data.safety_sleep_period)
+            {
                 stateTimeoutDuration = settings_packet.data.operational_wakeup;
+            }
             else
+            {
                 stateTimeoutDuration = settings_packet.data.safety_sleep_period;
+            }
 
             stateGotoTimeout = WAIT_STATUS_ON;
 
@@ -547,7 +583,7 @@ void pira_state_machine()
                 //Change state
                 state_transition(WAIT_STATUS_ON);
             }
-            break;
+        break;
 
         case WAIT_STATUS_ON:
 
@@ -559,9 +595,10 @@ void pira_state_machine()
 
             // If status pin is read as high go to WAKEUP state
             if(digitalRead(RASPBERRY_PI_STATUS))
+            {
                 state_transition(WAKEUP);
-
-            break;
+            }
+        break;
 
         case WAKEUP:
 
@@ -570,9 +607,10 @@ void pira_state_machine()
 
             //Check status pin, if low then turn off power supply.
             if(!digitalRead(RASPBERRY_PI_STATUS))
+            {
                 state_transition(REBOOT_DETECTION);
-
-            break;
+            }
+        break;
 
         case REBOOT_DETECTION:
 
@@ -580,21 +618,23 @@ void pira_state_machine()
             stateGotoTimeout = IDLE;
 
             if(digitalRead(RASPBERRY_PI_STATUS))
+            {
                 // RPi rebooted, go back to wake up
                 state_transition(WAKEUP);
-
-            break;
+            }
+        break;
 
         default:
 
             status_pira_state_machine=IDLE;
-
-            break;
+        break;
     }
 
     // check if the existing state has timed out and transition to next state
     if(state_check_timeout())
+    {
         state_transition(stateGotoTimeout);
+    }
 }
 
 /**
@@ -660,8 +700,12 @@ void pira_run()
 #endif
 
     // Update status values in not in IDLE state
-    if(!(status_pira_state_machine == IDLE))
+    if(status_pira_state_machine != IDLE)
+    {
         send_status_values();
+    }
 
     pira_state_machine();
 }
+
+/*** end of file ***/

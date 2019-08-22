@@ -15,3 +15,4 @@ uint16_t get_raw_battery_voltage(void);
 float get_battery_voltage(uint16_t adcValue);
 
 #endif /* BATTERY_VOLTAGE_H */
+/*** end of file ***/

@@ -24,3 +24,5 @@
 #define BATTERY_VOLTAGE     (STM32L0_ADC_CHANNEL_5)
 
 #endif /* BOARD_H */
+
+/*** end of file ***/

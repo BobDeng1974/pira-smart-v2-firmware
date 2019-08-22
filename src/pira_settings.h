@@ -25,3 +25,5 @@ extern settingsPacket_t settings_packet;
 void settings_init(void);
 
 #endif
+
+/*** end of file ***/

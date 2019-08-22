@@ -12,7 +12,7 @@
 #include "board.h" 
 #include "battery_voltage.h"
 #include "pira_fsm.h"
-#include "settings.h"
+#include "pira_settings.h"
 
 // Uart related functions
 void uart_command_parse(uint8_t *rxBuffer);
@@ -52,4 +52,7 @@ char* return_state(state_e state);
 void pira_state_machine();
 void pira_init();
 void pira_run();
+
 #endif /* RASPBERRY_PI_CONTROL_H */
+
+/*** end of file ***/

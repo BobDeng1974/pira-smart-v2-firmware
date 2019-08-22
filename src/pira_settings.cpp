@@ -1,4 +1,4 @@
-#include "settings.h"
+#include "pira_settings.h"
 
 settingsPacket_t settings_packet = 
 { 
@@ -11,3 +11,4 @@ settingsPacket_t settings_packet =
     settings_packet.data.turnOnRpi = 0
 };
 
+/*** end of file ***/

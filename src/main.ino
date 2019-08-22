@@ -11,7 +11,7 @@
 #include "board.h"
 #include "pira_fsm.h"
 #include "battery_voltage.h"
-#include "settings.h"
+#include "pira_settings.h"
 
 bool flag_execute = 0;
 // Timer needed for interrupt
@@ -56,3 +56,5 @@ void loop()
     pira_run();
     delay(1000);
 }
+
+/*** end of file ***/
