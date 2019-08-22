@@ -5,3 +5,5 @@
 *.pyc
 debug/
 debug/*
+build/
+build/*
