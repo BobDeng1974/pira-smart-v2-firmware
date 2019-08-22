@@ -25,7 +25,7 @@ uint16_t get_raw_battery_voltage(void)
 /**
  * @brief Returns battery voltage in volts 
  *
- * @param adcValue
+ * @param[in] adcValue
  * @return float 
  */
 float get_battery_voltage(uint16_t adcValue)
